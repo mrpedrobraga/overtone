@@ -1,0 +1,379 @@
+[gd_scene load_steps=5 format=3 uid="uid://ccundcdbij80v"]
+
+[ext_resource type="Theme" uid="uid://5j5gdxwv5pu4" path="res://prototype/Flat.tres" id="1_ujwnj"]
+[ext_resource type="Texture2D" uid="uid://djcuc1b4tyi0r" path="res://icon.svg" id="2_p6kll"]
+[ext_resource type="FontFile" uid="uid://cfx1pi0o5ice3" path="res://prototype/Lora-VariableFont_wght.ttf" id="3_vfp7q"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_4bxgi"]
+font = ExtResource("3_vfp7q")
+font_size = 72
+
+[node name="root" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="panel" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_ujwnj")
+
+[node name="V" type="VBoxContainer" parent="panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="titlebar" type="HBoxContainer" parent="panel/V"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+
+[node name="icon_window" type="TextureRect" parent="panel/V/titlebar"]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+texture = ExtResource("2_p6kll")
+ignore_texture_size = true
+
+[node name="-----3" type="Control" parent="panel/V/titlebar"]
+custom_minimum_size = Vector2(16, 0)
+layout_mode = 2
+
+[node name="label" type="Label" parent="panel/V/titlebar"]
+layout_mode = 2
+text = "Overtone - Untitled Project*"
+vertical_alignment = 1
+
+[node name="-----" type="Control" parent="panel/V/titlebar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="timer_dock" type="HBoxContainer" parent="panel/V/titlebar"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="btn_play_play_from_start" type="Button" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+text = "||>"
+flat = true
+
+[node name="btn_play_playpause" type="Button" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+text = "|>"
+flat = true
+
+[node name="btn_play_reset" type="Button" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+text = "[_]"
+flat = true
+
+[node name="-----" type="VSeparator" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+
+[node name="btn_tempo_metronome" type="Button" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+text = "M"
+flat = true
+
+[node name="lbl_tempo" type="Label" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+text = "Tempo ="
+vertical_alignment = 1
+
+[node name="btn_tempo" type="LineEdit" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+text = "120"
+alignment = 2
+
+[node name="txt_t_elapsed" type="Label" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+text = "03:33.16"
+vertical_alignment = 1
+
+[node name="txt_t_elapsed2" type="Label" parent="panel/V/titlebar/timer_dock"]
+layout_mode = 2
+text = "02.3"
+vertical_alignment = 1
+
+[node name="-----2" type="Control" parent="panel/V/titlebar"]
+custom_minimum_size = Vector2(16, 0)
+layout_mode = 2
+
+[node name="window" type="HBoxContainer" parent="panel/V/titlebar"]
+layout_mode = 2
+
+[node name="btn_window_hide" type="Button" parent="panel/V/titlebar/window"]
+layout_mode = 2
+text = "-"
+flat = true
+
+[node name="btn_window_minimax" type="Button" parent="panel/V/titlebar/window"]
+layout_mode = 2
+text = "v"
+flat = true
+
+[node name="btn_window_close" type="Button" parent="panel/V/titlebar/window"]
+layout_mode = 2
+text = "x"
+flat = true
+
+[node name="contents" type="HBoxContainer" parent="panel/V"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="dock_left" type="VBoxContainer" parent="panel/V/contents"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="dock_instruments" type="VBoxContainer" parent="panel/V/contents/dock_left"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="label" type="Label" parent="panel/V/contents/dock_left/dock_instruments"]
+layout_mode = 2
+text = "Instruments
+"
+
+[node name="item_list" type="ItemList" parent="panel/V/contents/dock_left/dock_instruments"]
+layout_mode = 2
+size_flags_vertical = 3
+item_count = 4
+item_0/text = "Violin I"
+item_1/text = "Violin II"
+item_2/text = "Violoncello"
+item_3/text = "Drumset"
+
+[node name="dock_plugins" type="VBoxContainer" parent="panel/V/contents/dock_left"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="label" type="Label" parent="panel/V/contents/dock_left/dock_plugins"]
+layout_mode = 2
+text = "Plugins
+"
+
+[node name="item_list" type="ItemList" parent="panel/V/contents/dock_left/dock_plugins"]
+layout_mode = 2
+size_flags_vertical = 3
+item_count = 4
+item_0/text = "WaveForm"
+item_1/text = "SimpleSampler"
+item_2/text = "Harmonics"
+item_3/text = "SimpleDrums"
+
+[node name="m" type="VBoxContainer" parent="panel/V/contents"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="control" type="Control" parent="panel/V/contents/m"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="tab_container" type="TabContainer" parent="panel/V/contents/m/control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Song" type="Panel" parent="panel/V/contents/m/control/tab_container"]
+visible = false
+layout_mode = 2
+
+[node name="Pattern" type="Panel" parent="panel/V/contents/m/control/tab_container"]
+visible = false
+layout_mode = 2
+
+[node name="Project" type="Panel" parent="panel/V/contents/m/control/tab_container"]
+layout_mode = 2
+
+[node name="scroll_container" type="ScrollContainer" parent="panel/V/contents/m/control/tab_container/Project"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="v" type="VBoxContainer" parent="panel/V/contents/m/control/tab_container/Project/scroll_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="-----" type="Control" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v"]
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+
+[node name="txt_project_title" type="Label" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v"]
+layout_mode = 2
+text = "Untitled Project"
+label_settings = SubResource("LabelSettings_4bxgi")
+horizontal_alignment = 1
+
+[node name="-----2" type="Control" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+
+[node name="control" type="Control" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="grid_container" type="GridContainer" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control"]
+custom_minimum_size = Vector2(400, 0)
+layout_mode = 1
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -65.5
+offset_right = 65.5
+grow_horizontal = 2
+grow_vertical = 2
+columns = 2
+
+[node name="label" type="Label" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Composer:"
+horizontal_alignment = 2
+
+[node name="line_edit" type="LineEdit" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Unnamed"
+
+[node name="label2" type="Label" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Arranger:"
+horizontal_alignment = 2
+
+[node name="line_edit2" type="LineEdit" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Unnamed"
+
+[node name="label3" type="Label" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Copyright"
+horizontal_alignment = 2
+
+[node name="line_edit3" type="LineEdit" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "(c)"
+
+[node name="label4" type="Label" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Album:"
+horizontal_alignment = 2
+
+[node name="line_edit4" type="LineEdit" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Album Name"
+
+[node name="label5" type="Label" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Track Number:"
+horizontal_alignment = 2
+
+[node name="line_edit5" type="LineEdit" parent="panel/V/contents/m/control/tab_container/Project/scroll_container/v/control/grid_container"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "42"
+
+[node name="bottom_panel" type="TabContainer" parent="panel/V/contents/m"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+tab_alignment = 2
+tabs_visible = false
+
+[node name="dock_mixer" type="HBoxContainer" parent="panel/V/contents/m/bottom_panel"]
+layout_mode = 2
+
+[node name="bottom_panel_tabs" type="TabBar" parent="panel/V/contents/m"]
+layout_mode = 2
+tab_count = 2
+tab_0/title = "Automation"
+tab_1/title = "Mixer"
+
+[node name="dock_right" type="VBoxContainer" parent="panel/V/contents"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="dock_properties" type="VBoxContainer" parent="panel/V/contents/dock_right"]
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 2.0
+
+[node name="label" type="Label" parent="panel/V/contents/dock_right/dock_properties"]
+layout_mode = 2
+text = "Properties
+"
+
+[node name="control" type="Control" parent="panel/V/contents/dock_right/dock_properties"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="label" type="Label" parent="panel/V/contents/dock_right/dock_properties/control"]
+self_modulate = Color(1, 1, 1, 0.372549)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -81.0
+offset_top = -14.0
+offset_right = 81.0
+offset_bottom = 14.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Nothing Selected Yet!"
+
+[node name="dock_files" type="VBoxContainer" parent="panel/V/contents/dock_right"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="label" type="Label" parent="panel/V/contents/dock_right/dock_files"]
+layout_mode = 2
+text = "Assets"
+
+[node name="item_list" type="Tree" parent="panel/V/contents/dock_right/dock_files"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="options" type="HBoxContainer" parent="panel/V/contents/dock_right/dock_files"]
+layout_mode = 2
+alignment = 2
+
+[node name="text_edit" type="LineEdit" parent="panel/V/contents/dock_right/dock_files/options"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Filter..."
+clear_button_enabled = true
+
+[node name="button" type="Button" parent="panel/V/contents/dock_right/dock_files/options"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+icon = ExtResource("2_p6kll")
+expand_icon = true
+
+[node name="button2" type="Button" parent="panel/V/contents/dock_right/dock_files/options"]
+custom_minimum_size = Vector2(32, 32)
+layout_mode = 2
+icon = ExtResource("2_p6kll")
+expand_icon = true

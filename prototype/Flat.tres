@@ -1,0 +1,11 @@
+[gd_resource type="Theme" load_steps=3 format=3 uid="uid://5j5gdxwv5pu4"]
+
+[ext_resource type="FontFile" uid="uid://bvgnlihu4v5b2" path="res://prototype/NotoSansMath-Regular.ttf" id="1_pxu1r"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rc6it"]
+bg_color = Color(0.0745098, 0.0745098, 0.0745098, 1)
+
+[resource]
+default_font = ExtResource("1_pxu1r")
+BoxContainer/constants/separation = 0
+Panel/styles/panel = SubResource("StyleBoxFlat_rc6it")
