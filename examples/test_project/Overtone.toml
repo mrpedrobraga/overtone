@@ -1,0 +1,7 @@
+[info]
+name = "My Project 1"
+license = "MIT"
+authors = ["Pedro Braga"]
+
+[editor]
+requires_version = "0.0.1"

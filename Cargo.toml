@@ -1,0 +1,17 @@
+[package]
+name = "overtone"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["dylib", "rlib"]
+
+[build]
+rustflags = ["-C", "prefer-dynamic", "-C", "rpath"]
+
+[dependencies]
+libloading = "0.8.1"
+serde = "1.0.193"
+serde_derive = "1.0.193"
+toml = "0.8.8"
+uid = "0.1.7"
