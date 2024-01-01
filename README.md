@@ -3,7 +3,7 @@
 An API for musical-ish projects, that abstracts loading, managing and editing
 projects, arrangements, assets and plugins that can be combined to make music.
 
-> [!ALERT] 🚧 This is an in-progress project, in a rather early stage.
+> 🚧 This is an in-progress project, in a rather early stage.
 > It's not ready for serious usage yet.
 
 It reinvents the wheel somewhat in music creation, having focus on *Rich Musical Components* that better convey musical ideas for musicians reading and writing music in Overtone. Instead of forcing MIDI to do what it was never designed to do (express and render realistic music), you can decorate your music with markings (Glissandi, Hammer-ons, Pizz., Sforzando, etc.) that better model how a human perceives music, while still having meaningful playback from Overtone audio plugins.
