@@ -15,7 +15,8 @@ pub enum OvertoneApiError {
     TomlParsingError(toml::de::Error),
     StringParsingError(FromUtf8Error),
 
-    MissingPlugin(&'static str),
+    PluginAlreadyLoaded(),
+    MissingPlugin(String),
     LibraryNotFound(libloading::Error),
     LibraryIsNotOvertonePlugin(),
 }

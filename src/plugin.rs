@@ -4,6 +4,7 @@ use super::errors::OvertoneApiError;
 use super::project::Project;
 use libloading::Library;
 use std::fmt::Debug;
+use std::path::PathBuf;
 
 #[allow(dead_code)]
 
@@ -43,12 +44,18 @@ pub const PLUGIN_GETTER_SYMBOL: &'static [u8; 10] = b"get_plugin";
 
 impl<'a> LoadedPlugin<'a> {
     pub fn from_external_reference(
+        base_path: &Option<PathBuf>,
         plugin_ref: &'a PluginDependencyEntry,
     ) -> Result<LoadedPlugin<'a>, OvertoneApiError> {
+        let path = match base_path {
+            None => PathBuf::from(plugin_ref.path.clone()),
+            Some(v) => v.join(plugin_ref.path.clone()),
+        };
+
         let lib: libloading::Library;
         let plugin: Box<dyn Plugin>;
         unsafe {
-            let l = libloading::Library::new(plugin_ref.path.to_string());
+            let l = libloading::Library::new(path);
             lib = match l {
                 Ok(l) => l,
                 Err(e) => return Err(OvertoneApiError::LibraryNotFound(e)),
