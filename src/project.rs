@@ -79,8 +79,7 @@ impl<'a> Project<'a> {
             Some(p) => p,
         };
 
-        let mut loaded: LoadedPlugin =
-            LoadedPlugin::from_dependency_decl(&self.base_path, plugin_ref)?;
+        let loaded: LoadedPlugin = LoadedPlugin::from_dependency_decl(&self.base_path, plugin_ref)?;
 
         // TODO: Call the `on_plugin_load` callback passing a view to the project.
         //loaded.plugin.on_plugin_load(self);
