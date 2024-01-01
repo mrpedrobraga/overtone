@@ -1,9 +1,19 @@
 //! # Overtone
 //!
-//! An api for management of musical-ish projects,
+//! An API for management of musical-ish projects,
 //! that handles files, dependencies, plugins and actions,
 //! while keeping the parts generic enough that you can
 //! use them to do anything.
+//!
+//! An Overtone project is a folder which has an `Overtone.toml`
+//! file in its root.
+//!
+//! As such, here's a quick example of opening a project:
+//! ```
+//! let mut p = Project::load_from_directory("./examples/test_project")?;
+//! ```
+//!
+//! With that, you can modify the project in memory, until it's time to save it.
 
 pub mod errors;
 pub mod info;

@@ -63,7 +63,7 @@ impl<'a> Project<'a> {
         self.loaded_plugins.iter()
     }
 
-    // Loads a plugin from a library located at its path.
+    // Loads a plugin from a shared library located at the designated relative path.
     pub fn load_plugin(&'a mut self, id: String) -> Result<&'a LoadedPlugin, OvertoneApiError> {
         if let Some(_v) = self.loaded_plugins.iter().find(|p| p.source.id == id) {
             return Err(OvertoneApiError::PluginAlreadyLoaded());
@@ -79,11 +79,14 @@ impl<'a> Project<'a> {
             Some(p) => p,
         };
 
-        let loaded: LoadedPlugin =
-            LoadedPlugin::from_external_reference(&self.base_path, plugin_ref)?;
+        let mut loaded: LoadedPlugin =
+            LoadedPlugin::from_dependency_decl(&self.base_path, plugin_ref)?;
 
-        let p_ref: &LoadedPlugin = self.loaded_plugins.push_and_get(loaded);
+        // TODO: Call the `on_plugin_load` callback passing a view to the project.
+        //loaded.plugin.on_plugin_load(self);
 
-        return Ok(p_ref);
+        let loaded: &LoadedPlugin = self.loaded_plugins.push_and_get(loaded);
+
+        return Ok(loaded);
     }
 }

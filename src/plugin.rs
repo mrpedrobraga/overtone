@@ -1,7 +1,6 @@
-use crate::serialization::project::PluginDependencyEntry;
-
 use super::errors::OvertoneApiError;
 use super::project::Project;
+use crate::serialization::project::PluginDependencyEntry;
 use libloading::Library;
 use std::fmt::Debug;
 use std::path::PathBuf;
@@ -20,13 +19,15 @@ pub trait Plugin {
         return "a";
     }
     /// Signal executed when the plugin loads.
-    fn on_plugin_load(&self, _project: Project) {}
+    fn on_plugin_load(&mut self, _project: &Project) {}
 }
 
 /// Internal type of a plugin identifier.
 pub struct PluginIdType(());
+
 /// Id of a loaded plugin.
 pub type PluginId = uid::Id<PluginIdType>;
+
 // Type of a function that retrieves a plugin from a library.
 pub type PluginGetterFn = unsafe fn() -> Box<dyn Plugin>;
 
@@ -37,41 +38,51 @@ pub struct LoadedPlugin<'a> {
 
     // This must be declared last
     // as it needs to be dropped after 'plugin' drops.
-    pub lib: Library,
+    lib: Library,
 }
 
 pub const PLUGIN_GETTER_SYMBOL: &'static [u8; 10] = b"get_plugin";
 
 impl<'a> LoadedPlugin<'a> {
-    pub fn from_external_reference(
+    pub fn get_uid(&self) -> &PluginId {
+        return &self.uid;
+    }
+
+    pub fn get_plugin(&self) -> &Box<dyn Plugin> {
+        return &self.plugin;
+    }
+
+    pub fn get_lib(&'a self) -> &'a Library {
+        return &self.lib;
+    }
+
+    pub fn from_dependency_decl(
         base_path: &Option<PathBuf>,
-        plugin_ref: &'a PluginDependencyEntry,
+        source: &'a PluginDependencyEntry,
     ) -> Result<LoadedPlugin<'a>, OvertoneApiError> {
-        let path = match base_path {
-            None => PathBuf::from(plugin_ref.path.clone()),
-            Some(v) => v.join(plugin_ref.path.clone()),
-        };
+        let path = base_path.as_ref().map_or_else(
+            || PathBuf::from(source.path.clone()),
+            |b_p| b_p.join(source.path.clone()),
+        );
 
         let lib: libloading::Library;
         let plugin: Box<dyn Plugin>;
+
         unsafe {
             let l = libloading::Library::new(path);
-            lib = match l {
-                Ok(l) => l,
-                Err(e) => return Err(OvertoneApiError::LibraryNotFound(e)),
-            };
-            plugin = match lib.get::<PluginGetterFn>(PLUGIN_GETTER_SYMBOL) {
-                Ok(v) => v(),
-                Err(_) => return Err(OvertoneApiError::LibraryIsNotOvertonePlugin()),
-            };
+            lib = l.map_err(|e| OvertoneApiError::LibraryNotFound(e))?;
+            let plugin_getter = lib
+                .get::<PluginGetterFn>(PLUGIN_GETTER_SYMBOL)
+                .map_err(|_| OvertoneApiError::LibraryIsNotOvertonePlugin())?;
+            plugin = plugin_getter();
         }
-        let loaded = LoadedPlugin {
+
+        Ok(LoadedPlugin {
             uid: PluginId::new(),
             lib,
-            source: plugin_ref,
+            source,
             plugin,
-        };
-        Ok(loaded)
+        })
     }
 }
 
