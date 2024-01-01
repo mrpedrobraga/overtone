@@ -1,7 +1,8 @@
+use crate::serialization::project::PluginDependencyEntry;
+
 use super::errors::OvertoneApiError;
 use super::project::Project;
 use libloading::Library;
-use serde_derive::{Deserialize, Serialize};
 use std::fmt::Debug;
 
 #[allow(dead_code)]
@@ -28,27 +29,10 @@ pub type PluginId = uid::Id<PluginIdType>;
 // Type of a function that retrieves a plugin from a library.
 pub type PluginGetterFn = unsafe fn() -> Box<dyn Plugin>;
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ExternalPluginReference {
-    pub loaded: bool,
-    pub id: String,
-    pub path: String,
-}
-
-impl ExternalPluginReference {
-    pub fn new(id: String, path: String) -> Self {
-        Self {
-            loaded: false,
-            id,
-            path,
-        }
-    }
-}
-
 pub struct LoadedPlugin<'a> {
     pub uid: PluginId,
     pub plugin: Box<dyn Plugin>,
-    pub source: &'a ExternalPluginReference,
+    pub source: &'a PluginDependencyEntry,
 
     // This must be declared last
     // as it needs to be dropped after 'plugin' drops.
@@ -59,7 +43,7 @@ pub const PLUGIN_GETTER_SYMBOL: &'static [u8; 10] = b"get_plugin";
 
 impl<'a> LoadedPlugin<'a> {
     pub fn from_external_reference(
-        plugin_ref: &'a ExternalPluginReference,
+        plugin_ref: &'a PluginDependencyEntry,
     ) -> Result<LoadedPlugin<'a>, OvertoneApiError> {
         let lib: libloading::Library;
         let plugin: Box<dyn Plugin>;

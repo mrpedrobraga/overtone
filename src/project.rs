@@ -1,23 +1,7 @@
-use super::{
-    errors::OvertoneApiError,
-    info::Info,
-    plugin::{ExternalPluginReference, LoadedPlugin},
-    utils::PushReturn,
-};
-use serde_derive::{Deserialize, Serialize};
-use std::fs;
+use crate::serialization::project::{load_project_file, ProjectFile};
 
-/// An Overtone project, which refers to (and can load) plugins, files, arrangements.
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ProjectFile {
-    pub info: ProjectInfo,
-    pub plugins: Option<Vec<ExternalPluginReference>>,
-}
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ProjectInfo {
-    pub name: String,
-    pub authors: Option<Vec<String>>,
-}
+use super::{errors::OvertoneApiError, info::Info, plugin::LoadedPlugin, utils::PushReturn};
+use std::fs;
 
 #[derive(Debug)]
 pub struct Project<'a> {
@@ -35,12 +19,13 @@ const OVERTONE_PROJECT_FILE_NAME: &'static str = "Overtone.toml";
 
 impl<'a> Project<'a> {
     pub fn new(file: ProjectFile) -> Self {
-        Project {
+        Self {
             file,
             loaded_plugins: Vec::new(),
         }
     }
 
+    // Loads an overtone project from a directory, looking for an `Overtone.toml` file.
     pub fn load_from_directory<S: Into<String>>(path: S) -> Result<Self, OvertoneApiError> {
         let dir = match fs::read_dir(path.into()) {
             Ok(v) => v,
@@ -58,20 +43,12 @@ impl<'a> Project<'a> {
                 Ok(v) => v,
             },
         };
-        let proj_file_raw = match fs::read(dir_entry.path()) {
-            Err(e) => return Err(OvertoneApiError::GenericError(Some(e))),
-            Ok(v) => match String::from_utf8(v) {
-                Err(e) => return Err(OvertoneApiError::StringParsingError(e)),
-                Ok(v) => v,
-            },
-        };
-        let proj_file: Result<ProjectFile, _> = toml::from_str(proj_file_raw.as_str());
-        let proj_file = match proj_file {
-            Err(e) => return Err(OvertoneApiError::TomlParsingError(e)),
-            Ok(v) => v,
-        };
+        let file = load_project_file(dir_entry.path())?;
 
-        Ok(Project::new(proj_file))
+        Ok(Project {
+            file,
+            loaded_plugins: vec![],
+        })
     }
 
     // Loads a plugin from a library located at its path.
