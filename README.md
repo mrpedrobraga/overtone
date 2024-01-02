@@ -116,6 +116,4 @@ Monetary contributions aren't accepted yet -- but will be welcomed in the future
 
 ## License
 
-***In Progress***
-
-~~I'm aiming for MIT, but I need to check the deps carefully first.~~
+MIT License.
