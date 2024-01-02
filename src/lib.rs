@@ -17,6 +17,10 @@
 //!
 //! With that, you can modify the project in memory, until it's time to save it.
 
+#![allow(dead_code)]
+#![allow(unused_variables)]
+#![allow(unreachable_code)]
+
 pub mod arrangement;
 pub mod errors;
 pub mod info;
@@ -25,4 +29,4 @@ pub mod project;
 pub mod resource;
 pub mod serialization;
 pub mod types;
-mod utils;
+pub mod utils;

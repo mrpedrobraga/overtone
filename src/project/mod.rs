@@ -1,9 +1,15 @@
-use crate::serialization::{
-    dependency::PluginDependencyEntry,
-    project::{load_project_from_directory, ProjectFile},
+use crate::{
+    arrangement::serialization::ArrangementHeader,
+    serialization::dependency::PluginDependencyEntry, utils::containers::PushReturn,
 };
 
-use super::{errors::OvertoneApiError, info::Info, plugin::LoadedPlugin, utils::PushReturn};
+mod serialization;
+
+use self::serialization::{
+    load_project_deps_from_directory, load_project_from_directory, ProjectFile,
+};
+
+use super::{errors::OvertoneApiError, info::Info, plugin::LoadedPlugin};
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -12,6 +18,12 @@ pub struct Project<'a> {
     pub base_path: Option<PathBuf>,
 
     pub loaded_plugins: Vec<LoadedPlugin<'a>>,
+    pub dependencies: ProjectDependencies,
+}
+
+#[derive(Debug)]
+pub struct ProjectDependencies {
+    pub arrangements: Vec<ArrangementHeader>,
 }
 
 impl<'a> Info for Project<'a> {
@@ -26,6 +38,9 @@ impl<'a> Project<'a> {
             file,
             base_path: None,
             loaded_plugins: Vec::new(),
+            dependencies: ProjectDependencies {
+                arrangements: vec![],
+            },
         }
     }
 
@@ -34,10 +49,13 @@ impl<'a> Project<'a> {
         let path_str: String = path.into();
         let file = load_project_from_directory(&path_str)?;
 
+        let dependencies = load_project_deps_from_directory(&path_str)?;
+
         Ok(Project {
             file,
             base_path: Some(PathBuf::from(path_str)),
             loaded_plugins: vec![],
+            dependencies,
         })
     }
 

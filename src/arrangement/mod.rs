@@ -1,8 +1,9 @@
-use crate::{
-    resource::{Resource, ResourceFieldError, ResourceFieldValue},
-    serialization::arrangement::ArrangementHeader,
-};
-use std::fmt::Debug;
+use crate::resource::{Resource, ResourceFieldError, ResourceFieldValue};
+
+use self::serialization::ArrangementHeader;
+
+pub mod errors;
+pub mod serialization;
 
 #[derive(Debug)]
 pub struct Arrangement {

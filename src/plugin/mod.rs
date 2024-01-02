@@ -1,11 +1,14 @@
 use crate::serialization::dependency::PluginDependencyEntry;
-use crate::serialization::plugin::load_plugin_lib;
+
+use self::serialization::load_plugin_lib;
 
 use super::errors::OvertoneApiError;
 use super::project::Project;
 use libloading::Library;
 use std::fmt::Debug;
 use std::path::PathBuf;
+
+pub mod serialization;
 
 #[allow(dead_code)]
 
