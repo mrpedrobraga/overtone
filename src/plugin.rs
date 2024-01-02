@@ -26,7 +26,7 @@ pub trait Plugin {
 pub struct PluginIdType(());
 
 /// Id of a loaded plugin.
-pub type PluginId = uid::Id<PluginIdType>;
+pub type PluginId = i32;
 
 // Type of a function that retrieves a plugin from a library.
 pub type PluginGetterFn = unsafe fn() -> Box<dyn Plugin>;
@@ -78,7 +78,7 @@ impl<'a> LoadedPlugin<'a> {
         }
 
         Ok(LoadedPlugin {
-            uid: PluginId::new(),
+            uid: 0,
             lib,
             source,
             plugin,
