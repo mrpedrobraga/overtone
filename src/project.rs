@@ -1,7 +1,9 @@
-use crate::serialization::project::{load_project_file, PluginDependencyEntry, ProjectFile};
+use crate::serialization::project::{
+    load_project_from_directory, PluginDependencyEntry, ProjectFile,
+};
 
 use super::{errors::OvertoneApiError, info::Info, plugin::LoadedPlugin, utils::PushReturn};
-use std::{fs, path::PathBuf};
+use std::path::PathBuf;
 
 #[derive(Debug)]
 pub struct Project<'a> {
@@ -17,8 +19,6 @@ impl<'a> Info for Project<'a> {
     }
 }
 
-const OVERTONE_PROJECT_FILE_NAME: &'static str = "Overtone.toml";
-
 impl<'a> Project<'a> {
     pub fn new(file: ProjectFile) -> Self {
         Self {
@@ -31,23 +31,7 @@ impl<'a> Project<'a> {
     // Loads an overtone project from a directory, looking for an `Overtone.toml` file.
     pub fn load_from_directory<S: Into<String>>(path: S) -> Result<Self, OvertoneApiError> {
         let path_str: String = path.into();
-        let dir = match fs::read_dir(path_str.clone()) {
-            Ok(v) => v,
-            Err(e) => return Err(OvertoneApiError::DirectoryNotFound(e)),
-        };
-
-        let dir_entry = dir.into_iter().find(|e| match e {
-            Err(_) => false,
-            Ok(v) => v.file_name() == OVERTONE_PROJECT_FILE_NAME,
-        });
-        let dir_entry = match dir_entry {
-            None => return Err(OvertoneApiError::DirectoryIsNotOvertoneProject(None)),
-            Some(v) => match v {
-                Err(e) => return Err(OvertoneApiError::DirectoryIsNotOvertoneProject(Some(e))),
-                Ok(v) => v,
-            },
-        };
-        let file = load_project_file(dir_entry.path())?;
+        let file = load_project_from_directory(&path_str)?;
 
         Ok(Project {
             file,
