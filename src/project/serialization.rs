@@ -14,8 +14,8 @@ use std::{
 };
 
 const OVERTONE_PROJECT_FILE_NAME: &'static str = "Overtone.toml";
-
 const OVERTONE_ARRANGEMENTS_FOLDER_PATH: &'static str = "arrangements";
+const ARRANGEMENT_HEADER_FILE_NAME: &'static str = "index.toml";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectFile {
@@ -76,9 +76,11 @@ pub fn load_project_from_directory(path_str: &String) -> Result<ProjectFile, Ove
 pub fn load_project_deps_from_directory(
     path_str: &String,
 ) -> Result<ProjectDependencies, OvertoneApiError> {
-    let arrangements: Vec<ArrangementHeader> = load_project_arrangements(path_str)?
+    let arrangements: Vec<ArrangementHeader> = load_project_arrangements(path_str)
+        .map_err(|e| OvertoneApiError::ArrangementError(e))?
         .into_iter()
-        .collect::<Result<_, _>>()?;
+        .collect::<Result<_, _>>()
+        .map_err(|e| OvertoneApiError::ArrangementError(e))?;
 
     Ok(ProjectDependencies { arrangements })
 }
@@ -86,23 +88,21 @@ pub fn load_project_deps_from_directory(
 // TODO: This will be refactored out somewhere else.
 fn load_project_arrangements(
     path_str: &String,
-) -> Result<Vec<Result<ArrangementHeader, OvertoneApiError>>, OvertoneApiError> {
+) -> Result<Vec<Result<ArrangementHeader, ArrangementError>>, ArrangementError> {
     let arrangements_dir_path = PathBuf::from(path_str).join(OVERTONE_ARRANGEMENTS_FOLDER_PATH);
 
     let dir = match fs::read_dir(arrangements_dir_path.clone()) {
         Ok(v) => v,
         Err(e) => {
-            fs::create_dir(arrangements_dir_path)
-                .map_err(|e| OvertoneApiError::ArrangementError(ArrangementError::IOError(e)))?;
+            fs::create_dir(arrangements_dir_path).map_err(|e| ArrangementError::IOError(e))?;
             return Ok(vec![]);
         }
     };
 
-    let arrangement_headers: Vec<Result<ArrangementHeader, OvertoneApiError>> = dir
+    let arrangement_headers: Vec<Result<ArrangementHeader, ArrangementError>> = dir
         .into_iter()
         .filter_map(|entry| {
-            let e =
-                entry.map_err(|e| OvertoneApiError::ArrangementError(ArrangementError::IOError(e)));
+            let e = entry.map_err(|e| ArrangementError::IOError(e));
             let e = match e {
                 Ok(v) => v,
                 Err(err) => return Some(Err(err)),
@@ -118,14 +118,17 @@ fn load_project_arrangements(
             let e = entry?;
 
             // Check for the "index.toml" file inside.
+            let header_path = e.path().join(ARRANGEMENT_HEADER_FILE_NAME);
+            let header_bytes =
+                fs::read(header_path).map_err(|e| ArrangementError::HeaderIOError(e))?;
+            let header_raw = String::from_utf8(header_bytes)
+                .map_err(|e| ArrangementError::HeaderStringError(e))?;
+            let header: ArrangementHeader =
+                toml::from_str(&header_raw).map_err(|e| ArrangementError::HeaderFormatError(e))?;
 
-            Ok(ArrangementHeader {
-                info: ArrangementHeaderInfo {
-                    name: e.path().to_str().unwrap_or("Unknown").to_string(),
-                },
-            })
+            Ok(header)
         })
         .collect();
 
-    Ok(vec![])
+    Ok(arrangement_headers)
 }
