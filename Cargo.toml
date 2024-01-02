@@ -2,6 +2,14 @@
 name = "overtone"
 version = "0.1.0"
 edition = "2021"
+rust-version = "1.74.0"
+description = "An API for creation and management of rich (as in rich-text) musical-ish projects."
+readme = "README.md"
+license = "MIT"
+license-file = "LICENSE"
+repository = "https://github.com/mrpedrobraga/overtone"
+categories = ["data-structures"]
+keywords = ["overtone", "music", "daw", "composition"]
 
 [lib]
 crate-type = ["dylib", "rlib"]

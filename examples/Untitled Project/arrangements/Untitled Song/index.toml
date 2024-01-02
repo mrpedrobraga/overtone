@@ -1,6 +1,7 @@
 [info]
 name = "Untitled Song"
 authors = ["Pedro Braga"]
+rust-version = "1.74.0"
 
 [editor]
 requires_version = "1.0.0"
