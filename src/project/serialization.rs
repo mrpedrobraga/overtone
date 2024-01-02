@@ -1,5 +1,8 @@
 use crate::{
-    arrangement::serialization::{ArrangementHeader, ArrangementHeaderInfo},
+    arrangement::{
+        errors::ArrangementError,
+        serialization::{ArrangementHeader, ArrangementHeaderInfo},
+    },
     errors::{IOError, OvertoneApiError},
     project::ProjectDependencies,
     serialization::dependency::PluginDependencyEntry,
@@ -90,7 +93,7 @@ fn load_project_arrangements(
         Ok(v) => v,
         Err(e) => {
             fs::create_dir(arrangements_dir_path)
-                .map_err(|e| OvertoneApiError::ArrangementIOError(e))?;
+                .map_err(|e| OvertoneApiError::ArrangementError(ArrangementError::IOError(e)))?;
             return Ok(vec![]);
         }
     };
@@ -98,7 +101,8 @@ fn load_project_arrangements(
     let arrangement_headers: Vec<Result<ArrangementHeader, OvertoneApiError>> = dir
         .into_iter()
         .filter_map(|entry| {
-            let e = entry.map_err(|e| OvertoneApiError::ArrangementIOError(e));
+            let e =
+                entry.map_err(|e| OvertoneApiError::ArrangementError(ArrangementError::IOError(e)));
             let e = match e {
                 Ok(v) => v,
                 Err(err) => return Some(Err(err)),

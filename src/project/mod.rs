@@ -1,9 +1,10 @@
 use crate::{
-    arrangement::serialization::ArrangementHeader,
+    arrangement::serialization::ArrangementHeader, plugin::errors::PluginError,
     serialization::dependency::PluginDependencyEntry, utils::containers::PushReturn,
 };
 
-mod serialization;
+pub mod errors;
+pub mod serialization;
 
 use self::serialization::{
     load_project_deps_from_directory, load_project_from_directory, ProjectFile,
@@ -12,6 +13,9 @@ use self::serialization::{
 use super::{errors::OvertoneApiError, info::Info, plugin::LoadedPlugin};
 use std::path::PathBuf;
 
+/// Overtone Project, holds references to in-disk dependencies and manages
+/// changes upon them (refactoring). It also contains loaded references to
+/// the dependencies, and manages loading/unloading them.
 #[derive(Debug)]
 pub struct Project<'a> {
     pub file: ProjectFile,
@@ -19,11 +23,6 @@ pub struct Project<'a> {
 
     pub loaded_plugins: Vec<LoadedPlugin<'a>>,
     pub dependencies: ProjectDependencies,
-}
-
-#[derive(Debug)]
-pub struct ProjectDependencies {
-    pub arrangements: Vec<ArrangementHeader>,
 }
 
 impl<'a> Info for Project<'a> {
@@ -68,18 +67,18 @@ impl<'a> Project<'a> {
     }
 
     // Loads a plugin from a shared library located at the designated relative path.
-    pub fn load_plugin(&'a mut self, id: String) -> Result<&'a LoadedPlugin, OvertoneApiError> {
+    pub fn load_plugin(&'a mut self, id: String) -> Result<&'a LoadedPlugin, PluginError> {
         if let Some(_v) = self.loaded_plugins.iter().find(|p| p.source.id == id) {
-            return Err(OvertoneApiError::PluginAlreadyLoaded());
+            return Err(PluginError::PluginAlreadyLoaded());
         }
 
         let plugins = match &self.file.plugins {
-            None => return Err(OvertoneApiError::MissingPlugin(id)),
+            None => return Err(PluginError::MissingPlugin(id)),
             Some(v) => v,
         };
         let plugin_ref = plugins.iter().find(|plug_ref| plug_ref.id == id);
         let plugin_ref = match plugin_ref {
-            None => return Err(OvertoneApiError::MissingPlugin(id)),
+            None => return Err(PluginError::MissingPlugin(id)),
             Some(p) => p,
         };
 
@@ -92,4 +91,9 @@ impl<'a> Project<'a> {
 
         return Ok(loaded);
     }
+}
+
+#[derive(Debug)]
+pub struct ProjectDependencies {
+    pub arrangements: Vec<ArrangementHeader>,
 }

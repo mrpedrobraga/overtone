@@ -1,5 +1,6 @@
 use crate::serialization::dependency::PluginDependencyEntry;
 
+use self::errors::PluginError;
 use self::serialization::load_plugin_lib;
 
 use super::errors::OvertoneApiError;
@@ -8,6 +9,7 @@ use libloading::Library;
 use std::fmt::Debug;
 use std::path::PathBuf;
 
+pub mod errors;
 pub mod serialization;
 
 #[allow(dead_code)]
@@ -59,7 +61,7 @@ impl<'a> LoadedPlugin<'a> {
     pub fn from_dependency_decl(
         base_path: &Option<PathBuf>,
         source: &'a PluginDependencyEntry,
-    ) -> Result<LoadedPlugin<'a>, OvertoneApiError> {
+    ) -> Result<LoadedPlugin<'a>, PluginError> {
         let path = base_path.as_ref().map_or_else(
             || PathBuf::from(source.path.clone()),
             |b_p| b_p.join(source.path.clone()),

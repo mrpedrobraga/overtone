@@ -1,23 +1,28 @@
-//! All the API errors.
+//! # API Errors
+//!
+//! Errors in the Overtone API are detailed trees, which precisely map the source of a failure.
+//! This design allows the API (and the frontend) to fail gracefully and avoid crashes.
+//!
+//! From dependencies, to memory errors, the API should avoid crashing as much as possible,
+//! and inform the consumer on how to act to recover from the failure.
 
 use std::string::FromUtf8Error;
+
+use crate::{arrangement::errors::ArrangementError, plugin::errors::PluginError};
 
 #[derive(Debug)]
 pub enum OvertoneApiError {
     // A generic error. This is a code smell and will be removed from Overtone as stability grows.
     GenericError(Option<std::io::Error>),
 
-    IO(IOError),
-
-    ArrangementIOError(std::io::Error),
-
     TomlParsingError(toml::de::Error),
     StringParsingError(FromUtf8Error),
 
-    PluginAlreadyLoaded(),
-    MissingPlugin(String),
-    LibraryNotFound(libloading::Error),
-    LibraryIsNotOvertonePlugin(),
+    IO(IOError),
+
+    ArrangementError(ArrangementError),
+
+    PluginError(PluginError),
 }
 
 #[derive(Debug)]
