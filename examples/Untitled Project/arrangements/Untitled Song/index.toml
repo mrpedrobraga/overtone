@@ -1,3 +1,6 @@
-[arrangement]
+[info]
 name = "Untitled Song"
 authors = ["Pedro Braga"]
+
+[editor]
+requires_version = "1.0.0"

@@ -7,6 +7,7 @@ use std::{fs, path::PathBuf};
 pub struct Project<'a> {
     pub file: ProjectFile,
     pub base_path: Option<PathBuf>,
+
     pub loaded_plugins: Vec<LoadedPlugin<'a>>,
 }
 

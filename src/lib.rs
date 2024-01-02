@@ -9,8 +9,10 @@
 //! file in its root.
 //!
 //! As such, here's a quick example of opening a project:
-//! ```
+//! ```no_run
+//! # use overtone::{ project::Project, errors::OvertoneApiError };
 //! let mut p = Project::load_from_directory("./examples/test_project")?;
+//! # Ok::<(), OvertoneApiError>(())
 //! ```
 //!
 //! With that, you can modify the project in memory, until it's time to save it.
