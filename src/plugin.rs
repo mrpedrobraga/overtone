@@ -1,6 +1,8 @@
+use crate::serialization::dependency::PluginDependencyEntry;
+use crate::serialization::plugin::load_plugin_lib;
+
 use super::errors::OvertoneApiError;
 use super::project::Project;
-use crate::serialization::project::PluginDependencyEntry;
 use libloading::Library;
 use std::fmt::Debug;
 use std::path::PathBuf;
@@ -28,9 +30,6 @@ pub struct PluginIdType(());
 /// Id of a loaded plugin.
 pub type PluginId = i32;
 
-// Type of a function that retrieves a plugin from a library.
-pub type PluginGetterFn = unsafe fn() -> Box<dyn Plugin>;
-
 pub struct LoadedPlugin<'a> {
     pub uid: PluginId,
     pub plugin: Box<dyn Plugin>,
@@ -40,8 +39,6 @@ pub struct LoadedPlugin<'a> {
     // as it needs to be dropped after 'plugin' drops.
     lib: Library,
 }
-
-pub const PLUGIN_GETTER_SYMBOL: &'static [u8; 10] = b"get_plugin";
 
 impl<'a> LoadedPlugin<'a> {
     pub fn get_uid(&self) -> &PluginId {
@@ -65,17 +62,7 @@ impl<'a> LoadedPlugin<'a> {
             |b_p| b_p.join(source.path.clone()),
         );
 
-        let lib: libloading::Library;
-        let plugin: Box<dyn Plugin>;
-
-        unsafe {
-            let l = libloading::Library::new(path);
-            lib = l.map_err(|e| OvertoneApiError::LibraryNotFound(e))?;
-            let plugin_getter = lib
-                .get::<PluginGetterFn>(PLUGIN_GETTER_SYMBOL)
-                .map_err(|_| OvertoneApiError::LibraryIsNotOvertonePlugin())?;
-            plugin = plugin_getter();
-        }
+        let (lib, plugin) = load_plugin_lib(path)?;
 
         Ok(LoadedPlugin {
             uid: 0,

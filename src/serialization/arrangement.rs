@@ -1,16 +1,16 @@
 use serde_derive::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-struct ArrangementHeader {
+pub struct ArrangementHeader {
     info: ArrangementHeaderInfo,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct ArrangementHeaderInfo {
+pub struct ArrangementHeaderInfo {
     name: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct ArrangementHeaderEditorInfo {
+pub struct ArrangementHeaderEditorInfo {
     requires_version: String,
 }

@@ -17,10 +17,12 @@
 //!
 //! With that, you can modify the project in memory, until it's time to save it.
 
+pub mod arrangement;
 pub mod errors;
 pub mod info;
 pub mod plugin;
 pub mod project;
+pub mod resource;
 pub mod serialization;
 pub mod types;
 mod utils;

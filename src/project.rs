@@ -1,5 +1,6 @@
-use crate::serialization::project::{
-    load_project_from_directory, PluginDependencyEntry, ProjectFile,
+use crate::serialization::{
+    dependency::PluginDependencyEntry,
+    project::{load_project_from_directory, ProjectFile},
 };
 
 use super::{errors::OvertoneApiError, info::Info, plugin::LoadedPlugin, utils::PushReturn};

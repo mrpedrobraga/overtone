@@ -1,3 +1,4 @@
+use super::dependency::PluginDependencyEntry;
 use crate::errors::OvertoneApiError;
 use serde_derive::{Deserialize, Serialize};
 use std::{fs, path::Path};
@@ -14,12 +15,6 @@ pub struct ProjectFile {
 pub struct ProjectInfo {
     pub name: String,
     pub authors: Option<Vec<String>>,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct PluginDependencyEntry {
-    pub id: String,
-    pub path: String,
 }
 
 pub fn load_project_file<P: AsRef<Path>>(path: P) -> Result<ProjectFile, OvertoneApiError> {
