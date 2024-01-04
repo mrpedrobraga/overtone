@@ -1,14 +1,13 @@
-use crate::serialization::dependency::PluginDependencyEntry;
-
+use self::dependency::PluginDependencyEntry;
 use self::errors::PluginError;
 use self::serialization::load_plugin_lib;
 
-use super::errors::OvertoneApiError;
 use super::project::Project;
 use libloading::Library;
 use std::fmt::Debug;
 use std::path::PathBuf;
 
+pub mod dependency;
 pub mod errors;
 pub mod serialization;
 

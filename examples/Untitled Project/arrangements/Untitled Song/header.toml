@@ -1,7 +1,9 @@
-[info]
+[meta]
 name = "Untitled Song"
 authors = ["Pedro Braga"]
-rust-version = "1.74.0"
 
 [editor]
 requires_version = "1.0.0"
+
+[content.root_fragment]
+id = "605fec01-6cbc-4932-8fe8-09b02c6d50f1"

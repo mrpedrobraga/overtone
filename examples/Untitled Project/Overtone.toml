@@ -6,6 +6,9 @@ authors = ["Pedro Braga"]
 [editor]
 requires_version = "0.0.1"
 
+[path_overrides]
+arrangements_dir = "./arrangements"
+
 [[plugins]]
 id = "music-core"
 path = "./plugins/music-core.so"

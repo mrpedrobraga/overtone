@@ -1,6 +1,7 @@
 use crate::{
-    arrangement::serialization::ArrangementHeader, plugin::errors::PluginError,
-    serialization::dependency::PluginDependencyEntry, utils::containers::PushReturn,
+    arrangement::serialization::ArrangementHeader,
+    plugin::{dependency::PluginDependencyEntry, errors::PluginError},
+    utils::containers::PushReturn,
 };
 
 pub mod errors;

@@ -1,11 +1,11 @@
 use crate::{
     arrangement::{
         errors::ArrangementError,
-        serialization::{ArrangementHeader, ArrangementHeaderInfo},
+        serialization::{load_arrangement_from_directory, ArrangementHeader},
     },
     errors::{IOError, OvertoneApiError},
+    plugin::dependency::PluginDependencyEntry,
     project::ProjectDependencies,
-    serialization::dependency::PluginDependencyEntry,
 };
 use serde_derive::{Deserialize, Serialize};
 use std::{
@@ -15,11 +15,11 @@ use std::{
 
 const OVERTONE_PROJECT_FILE_NAME: &'static str = "Overtone.toml";
 const OVERTONE_ARRANGEMENTS_FOLDER_PATH: &'static str = "arrangements";
-const ARRANGEMENT_HEADER_FILE_NAME: &'static str = "index.toml";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectFile {
     pub info: ProjectInfo,
+    pub path_overrides: Option<ProjectPathOverrides>,
     pub plugins: Option<Vec<PluginDependencyEntry>>,
 }
 
@@ -27,6 +27,12 @@ pub struct ProjectFile {
 pub struct ProjectInfo {
     pub name: String,
     pub authors: Option<Vec<String>>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ProjectPathOverrides {
+    arrangements_dir: Option<PathBuf>,
+    default_export_dir: Option<PathBuf>,
 }
 
 pub fn load_project_file<P: AsRef<Path>>(path: P) -> Result<ProjectFile, OvertoneApiError> {
@@ -114,20 +120,7 @@ fn load_project_arrangements(
                 None
             }
         })
-        .map(|entry| {
-            let e = entry?;
-
-            // Check for the "index.toml" file inside.
-            let header_path = e.path().join(ARRANGEMENT_HEADER_FILE_NAME);
-            let header_bytes =
-                fs::read(header_path).map_err(|e| ArrangementError::HeaderIOError(e))?;
-            let header_raw = String::from_utf8(header_bytes)
-                .map_err(|e| ArrangementError::HeaderStringError(e))?;
-            let header: ArrangementHeader =
-                toml::from_str(&header_raw).map_err(|e| ArrangementError::HeaderFormatError(e))?;
-
-            Ok(header)
-        })
+        .map(|e| load_arrangement_from_directory(e?.path()))
         .collect();
 
     Ok(arrangement_headers)

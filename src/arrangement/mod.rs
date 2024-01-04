@@ -2,6 +2,7 @@ use crate::resource::{Resource, ResourceFieldError, ResourceFieldValue};
 
 use self::serialization::ArrangementHeader;
 
+pub mod dependency;
 pub mod errors;
 pub mod serialization;
 
