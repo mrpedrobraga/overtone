@@ -3,11 +3,11 @@ name = "Untitled Project"
 license = "MIT"
 authors = ["Pedro Braga"]
 
+[path_overrides]
+arrangements_dir = "songs"
+
 [editor]
 requires_version = "0.0.1"
-
-[path_overrides]
-arrangements_dir = "./arrangements"
 
 [[plugins]]
 id = "music-core"

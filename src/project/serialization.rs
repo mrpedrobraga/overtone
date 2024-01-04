@@ -81,8 +81,9 @@ pub fn load_project_from_directory(path_str: &String) -> Result<ProjectFile, Ove
 
 pub fn load_project_deps_from_directory(
     path_str: &String,
+    path_overrides: &Option<ProjectPathOverrides>,
 ) -> Result<ProjectDependencies, OvertoneApiError> {
-    let arrangements: Vec<ArrangementHeader> = load_project_arrangements(path_str)
+    let arrangements: Vec<ArrangementHeader> = load_project_arrangements(path_str, path_overrides)
         .map_err(|e| OvertoneApiError::ArrangementError(e))?
         .into_iter()
         .collect::<Result<_, _>>()
@@ -94,8 +95,15 @@ pub fn load_project_deps_from_directory(
 // TODO: This will be refactored out somewhere else.
 fn load_project_arrangements(
     path_str: &String,
+    path_overrides: &Option<ProjectPathOverrides>,
 ) -> Result<Vec<Result<ArrangementHeader, ArrangementError>>, ArrangementError> {
-    let arrangements_dir_path = PathBuf::from(path_str).join(OVERTONE_ARRANGEMENTS_FOLDER_PATH);
+    let arrangements_dir_path = PathBuf::from(path_str).join(
+        path_overrides
+            .as_ref()
+            .map(|po| po.arrangements_dir.as_ref())
+            .flatten()
+            .unwrap_or(&PathBuf::from(OVERTONE_ARRANGEMENTS_FOLDER_PATH)),
+    );
 
     let dir = match fs::read_dir(arrangements_dir_path.clone()) {
         Ok(v) => v,

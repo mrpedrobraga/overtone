@@ -49,7 +49,7 @@ impl<'a> Project<'a> {
         let path_str: String = path.into();
         let file = load_project_from_directory(&path_str)?;
 
-        let dependencies = load_project_deps_from_directory(&path_str)?;
+        let dependencies = load_project_deps_from_directory(&path_str, &file.path_overrides)?;
 
         Ok(Project {
             file,
