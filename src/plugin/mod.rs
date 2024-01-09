@@ -1,3 +1,5 @@
+use crate::contributions::PluginContributions;
+
 use self::dependency::PluginDependencyEntry;
 use self::errors::PluginError;
 use self::serialization::load_plugin_lib;
@@ -20,12 +22,17 @@ pub trait Plugin {
     /// To avoid 'id' collision, try to be unique.
     /// Note that as the plugin is loaded, it'll be identified by it's uid instead.
     fn get_id(&self) -> &'static str;
+
     /// Returns the name of the plugin, which will be displayed when errors occur.
     fn get_name(&self) -> &'static str {
         return "a";
     }
+
     /// Signal executed when the plugin loads.
     fn on_plugin_load(&mut self, _project: &Project) {}
+
+    /// Get all the plugin contributions
+    fn get_contributions(&self) -> PluginContributions;
 }
 
 /// Internal type of a plugin identifier.
