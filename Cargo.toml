@@ -17,6 +17,7 @@ crate-type = ["dylib", "rlib"]
 rustflags = ["-C", "prefer-dynamic", "-C", "rpath"]
 
 [dependencies]
+futures-signals = "0.3.33"
 libloading = "0.8.1"
 serde = "1.0.193"
 serde_derive = "1.0.193"

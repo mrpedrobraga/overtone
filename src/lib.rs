@@ -24,6 +24,7 @@
 pub mod arrangement;
 pub mod contributions;
 pub mod renderer;
+pub mod task;
 pub mod errors;
 pub mod info;
 pub mod plugin;
