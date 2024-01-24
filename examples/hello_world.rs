@@ -8,7 +8,7 @@ fn main() -> Result<(), OvertoneApiError> {
     let renderer = plugin.get_plugin().get_contributions().renderers.unwrap();
     let renderer = renderer.get("larynx").unwrap();
 
-    dbg!(renderer.get_render_format());
+    dbg!(renderer.get_render_format_id());
 
     Ok(())
 }

@@ -8,7 +8,10 @@
 
 use std::string::FromUtf8Error;
 
-use crate::{arrangement::errors::ArrangementError, plugin::errors::PluginError};
+use crate::{
+    arrangement::errors::ArrangementError, plugin::errors::PluginError,
+    project::errors::ProjectError,
+};
 
 #[derive(Debug)]
 pub enum OvertoneApiError {
@@ -20,8 +23,8 @@ pub enum OvertoneApiError {
 
     IO(IOError),
 
+    ProjectError(ProjectError),
     ArrangementError(ArrangementError),
-
     PluginError(PluginError),
 }
 
