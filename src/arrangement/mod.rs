@@ -4,12 +4,12 @@ use self::serialization::ArrangementHeader;
 
 pub mod dependency;
 pub mod errors;
-pub mod time;
 pub mod serialization;
+pub mod time;
 
 #[derive(Debug)]
 pub struct Arrangement {
-    header: ArrangementHeader,
+    pub header: ArrangementHeader,
 }
 
 impl<'a> Resource<'a> for Arrangement {

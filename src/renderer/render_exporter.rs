@@ -1,6 +1,7 @@
 use super::render_result::RenderResult;
 use std::path::PathBuf;
 
+#[derive(Debug)]
 pub enum ExportError {
     /// The parameter passed to `what` which hides a value through the [`RenderResult`] trait
     /// has an unsupported type (yes, despite the `is_render_format_supported` check).
@@ -14,8 +15,8 @@ pub trait RenderResultExporter {
     ///
     /// For example, exporting audio to ogg should be something like `pcm_audio`.
     /// If exporting video could be something like `rgba_frames` or `tmp_png_frames_dir`.
-    fn is_render_format_supported(format_id: String) -> bool;
+    fn is_render_format_supported(&self, format_id: String) -> bool;
 
     /// Exports a render result to a location.
-    fn export(what: &dyn RenderResult, location: PathBuf) -> Result<(), ExportError>;
+    fn export(&self, what: &dyn RenderResult, location: PathBuf) -> Result<(), ExportError>;
 }
