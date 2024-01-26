@@ -1,3 +1,5 @@
+use crate::errors::OvertoneApiError;
+
 #[derive(Debug)]
 pub enum PluginError {
     /// Plugin was already loaded and won't load again.
@@ -8,4 +10,10 @@ pub enum PluginError {
     LibraryNotFound(libloading::Error),
     /// Library was loaded but is not an Overtone plugin.
     LibraryIsNotOvertonePlugin(),
+}
+
+impl From<PluginError> for OvertoneApiError {
+    fn from(value: PluginError) -> Self {
+        OvertoneApiError::PluginError(value)
+    }
 }

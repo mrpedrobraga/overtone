@@ -41,7 +41,7 @@ pub struct PluginIdType(());
 /// Id of a loaded plugin.
 pub type PluginId = i32;
 
-pub struct LoadedPlugin<'a> {
+pub struct PluginBox<'a> {
     pub uid: PluginId,
     pub plugin: Box<dyn Plugin>,
     pub source: &'a PluginDependencyEntry,
@@ -51,7 +51,7 @@ pub struct LoadedPlugin<'a> {
     lib: Library,
 }
 
-impl<'a> LoadedPlugin<'a> {
+impl<'a> PluginBox<'a> {
     pub fn get_uid(&self) -> &PluginId {
         return &self.uid;
     }
@@ -67,7 +67,7 @@ impl<'a> LoadedPlugin<'a> {
     pub fn from_dependency_decl(
         base_path: &Option<PathBuf>,
         source: &'a PluginDependencyEntry,
-    ) -> Result<LoadedPlugin<'a>, PluginError> {
+    ) -> Result<PluginBox<'a>, PluginError> {
         let path = base_path.as_ref().map_or_else(
             || PathBuf::from(source.path.clone()),
             |b_p| b_p.join(source.path.clone()),
@@ -75,7 +75,7 @@ impl<'a> LoadedPlugin<'a> {
 
         let (lib, plugin) = load_plugin_lib(path)?;
 
-        Ok(LoadedPlugin {
+        Ok(PluginBox {
             uid: 0,
             lib,
             source,
@@ -84,7 +84,7 @@ impl<'a> LoadedPlugin<'a> {
     }
 }
 
-impl<'a> Debug for LoadedPlugin<'a> {
+impl<'a> Debug for PluginBox<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(format!("[Plugin '{}']", self.plugin.get_name()).as_str())
     }

@@ -11,7 +11,7 @@ use self::serialization::{
     load_project_deps_from_directory, load_project_from_directory, ProjectFile,
 };
 
-use super::{errors::OvertoneApiError, info::Info, plugin::LoadedPlugin};
+use super::{errors::OvertoneApiError, info::Info, plugin::PluginBox};
 use std::path::PathBuf;
 
 /// Overtone Project, holds references to in-disk dependencies and manages
@@ -22,7 +22,7 @@ pub struct Project<'a> {
     pub file: ProjectFile,
     pub base_path: Option<PathBuf>,
 
-    pub loaded_plugins: Vec<LoadedPlugin<'a>>,
+    pub loaded_plugins: Vec<PluginBox<'a>>,
     pub dependencies: ProjectDependencies,
 }
 
@@ -63,12 +63,12 @@ impl<'a> Project<'a> {
         &self.file.plugins
     }
 
-    pub fn iter_loaded_plugins(&'a self) -> std::slice::Iter<'a, LoadedPlugin<'a>> {
+    pub fn iter_loaded_plugins(&'a self) -> std::slice::Iter<'a, PluginBox<'a>> {
         self.loaded_plugins.iter()
     }
 
     // Loads a plugin from a shared library located at the designated relative path.
-    pub fn load_plugin(&'a mut self, id: String) -> Result<&'a LoadedPlugin, PluginError> {
+    pub fn load_plugin(&'a mut self, id: String) -> Result<&'a PluginBox, PluginError> {
         if let Some(_v) = self.loaded_plugins.iter().find(|p| p.source.id == id) {
             return Err(PluginError::PluginAlreadyLoaded());
         }
@@ -83,12 +83,12 @@ impl<'a> Project<'a> {
             Some(p) => p,
         };
 
-        let loaded: LoadedPlugin = LoadedPlugin::from_dependency_decl(&self.base_path, plugin_ref)?;
+        let loaded: PluginBox = PluginBox::from_dependency_decl(&self.base_path, plugin_ref)?;
 
         // TODO: Call the `on_plugin_load` callback passing a view to the project.
         //loaded.plugin.on_plugin_load(self);
 
-        let loaded: &LoadedPlugin = self.loaded_plugins.push_and_get(loaded);
+        let loaded: &PluginBox = self.loaded_plugins.push_and_get(loaded);
 
         return Ok(loaded);
     }
