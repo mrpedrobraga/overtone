@@ -7,7 +7,7 @@ use super::errors::PluginError;
 // Type of a function that retrieves a plugin from a library.
 pub type PluginGetterFn = unsafe fn() -> Box<dyn Plugin>;
 
-pub const PLUGIN_GETTER_SYMBOL: &'static [u8; 10] = b"get_plugin";
+pub const PLUGIN_GETTER_SYMBOL: &'static [u8; 19] = b"get_overtone_plugin";
 
 pub fn load_plugin_lib(path: PathBuf) -> Result<(Library, Box<dyn Plugin>), PluginError> {
     let lib: libloading::Library;

@@ -19,6 +19,7 @@ rustflags = ["-C", "prefer-dynamic", "-C", "rpath"]
 [dependencies]
 futures-signals = "0.3.33"
 libloading = "0.8.1"
+maplit = "1.0.2"
 serde = "1.0.193"
 serde_derive = "1.0.193"
 toml = "0.8.8"

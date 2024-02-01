@@ -8,4 +8,4 @@ requires_version = "0.0.1"
 
 [[plugins]]
 id = "music-core"
-path = "./plugins/libtest_plugin.so"
+path = "../../../plugin/target/release/libtest_plugin.so"
