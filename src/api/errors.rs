@@ -15,7 +15,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum OvertoneApiError {
-    // A generic error. This is a code smell and will be removed from Overtone as stability grows.
+    /// A generic error. This is a code smell and will be removed from Overtone as stability grows.
     GenericError(Option<std::io::Error>),
 
     TomlParsingError(toml::de::Error),
@@ -30,8 +30,9 @@ pub enum OvertoneApiError {
 
 #[derive(Debug)]
 pub enum IOError {
+    /// Another code smell.
+    ErrorOpeningProject(std::io::Error),
     DirectoryNotFound(std::io::Error),
     FileNotFound(std::io::Error),
     DirectoryIsNotOvertoneProject(Option<std::io::Error>),
-    ErrorOpeningProject(std::io::Error),
 }

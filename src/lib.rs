@@ -24,13 +24,10 @@
 pub mod arrangement;
 pub mod contributions;
 pub mod renderer;
-pub mod task;
-pub mod errors;
-pub mod info;
 pub mod plugin;
 pub mod project;
 pub mod resource;
 pub mod serialization;
-pub mod types;
 pub mod prelude;
 pub mod utils;
+pub mod api;

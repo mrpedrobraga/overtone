@@ -1,4 +1,4 @@
-use crate::errors::OvertoneApiError;
+use crate::api::errors::OvertoneApiError;
 
 #[derive(Debug)]
 pub enum ProjectError {}

@@ -1,4 +1,4 @@
-use crate::types::RefStr;
+use crate::utils::types::RefStr;
 
 /// Trait that allows a value to be edited from a generic inspector.
 pub trait Resource<'a> {

@@ -3,15 +3,12 @@ use crate::{
     plugin::{dependency::PluginDependencyEntry, errors::PluginError},
     utils::containers::PushReturn,
 };
-
 pub mod errors;
 pub mod serialization;
-
 use self::serialization::{
     load_project_deps_from_directory, load_project_from_directory, ProjectFile,
 };
-
-use super::{errors::OvertoneApiError, info::Info, plugin::PluginBox};
+use super::{api::errors::OvertoneApiError, utils::info::Info, plugin::PluginBox};
 use std::path::PathBuf;
 
 /// Overtone Project, holds references to in-disk dependencies and manages
@@ -24,6 +21,11 @@ pub struct Project<'a> {
 
     pub loaded_plugins: Vec<PluginBox<'a>>,
     pub dependencies: ProjectDependencies,
+}
+
+#[derive(Debug)]
+pub struct ProjectDependencies {
+    pub arrangements: Vec<ArrangementHeader>,
 }
 
 impl<'a> Info for Project<'a> {
@@ -92,9 +94,4 @@ impl<'a> Project<'a> {
 
         return Ok(loaded);
     }
-}
-
-#[derive(Debug)]
-pub struct ProjectDependencies {
-    pub arrangements: Vec<ArrangementHeader>,
 }

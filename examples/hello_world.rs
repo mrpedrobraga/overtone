@@ -2,7 +2,7 @@ use std::path::PathBuf;
 
 use overtone::{
     arrangement::{serialization::load_arrangement_from_directory, Arrangement},
-    errors::OvertoneApiError,
+    api::errors::OvertoneApiError,
     project::Project,
 };
 

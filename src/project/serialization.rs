@@ -3,7 +3,7 @@ use crate::{
         errors::ArrangementError,
         serialization::{load_arrangement_from_directory, ArrangementHeader},
     },
-    errors::{IOError, OvertoneApiError},
+    api::errors::{IOError, OvertoneApiError},
     plugin::dependency::PluginDependencyEntry,
     project::ProjectDependencies,
 };
