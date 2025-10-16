@@ -1,0 +1,11 @@
+[package]
+name = "overtone-music-std"
+version = "0.0.0"
+edition = "2024"
+authors = ["Pedro Braga"]
+
+[dependencies]
+overtone = { path = "../../" }
+
+[lib]
+crate-type = ["dylib", "rlib"]

@@ -7,5 +7,5 @@ authors = ["Pedro Braga"]
 requires_version = "0.0.1"
 
 [[plugins]]
-id = "music-core"
-path = "../../../plugin/target/release/libtest_plugin.so"
+id = "music-std"
+path = "../../target/release/libovertone_music_std.so"

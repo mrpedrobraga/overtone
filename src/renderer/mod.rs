@@ -17,8 +17,8 @@
 
 #![allow(dead_code)]
 
-use std::path::PathBuf;
 use crate::project::arrangement::Arrangement;
+use std::path::PathBuf;
 
 /// Trait for anything that can render an arrangement to a [`RenderResult`].
 pub trait Renderer {
@@ -56,12 +56,12 @@ pub trait RenderResultExt: RenderResult {
     ///
     /// This is used by exporters and previewers to get some concrete data
     /// out of the render result.
-    fn as_<T:'static>(&self) -> Option<&T> {
+    fn as_<T: 'static>(&self) -> Option<&T> {
         self.as_any().downcast_ref::<T>()
     }
 }
 
-impl<T> RenderResultExt for T where T: RenderResult {}
+impl<T> RenderResultExt for T where T: RenderResult + ?Sized {}
 
 /// Trait for something that can export a render result to a file.
 pub trait RenderExporter {
@@ -83,4 +83,6 @@ pub enum ExportError {
     /// If you got this error, it means someone failed to implement
     /// proper validation in `is_render_format_supported.`
     IncorrectRenderFormat,
+    /// Error saving the file to disk.
+    IOError(std::io::Error),
 }
