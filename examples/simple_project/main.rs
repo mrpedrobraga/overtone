@@ -4,7 +4,7 @@ use overtone::project::arrangement::Arrangement;
 use overtone::{project::Project, OvertoneError};
 
 fn main() -> Result<(), OvertoneError> {
-    let mut _p = Project::load_from_directory("./examples/Untitled Project")?;
+    let mut _p = Project::load_from_directory("./examples/simple_project/Untitled Project")?;
 
     let plugin_ref = _p.load_plugin("music-std".to_owned())?;
 
@@ -27,14 +27,14 @@ fn main() -> Result<(), OvertoneError> {
         .expect("Exporter not found");
 
     let song = Arrangement::load_from_directory(
-        "./examples/Untitled Project/arrangements/Untitled Song".into(),
+        "./examples/simple_project/Untitled Project/arrangements/Untitled Song".into(),
     )?;
 
     let render_result = renderer.render(&song);
 
     let _ = dbg!(exporter.export(
         &*render_result,
-        PathBuf::from("./examples/Untitled Project/exports/test-export.wav")
+        PathBuf::from("./examples/simple_project/Untitled Project/exports/tone.wav")
     ));
 
     Ok(())

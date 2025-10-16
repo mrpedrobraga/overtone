@@ -8,4 +8,4 @@ requires_version = "0.0.1"
 
 [[plugins]]
 id = "music-std"
-path = "../../target/release/libovertone_music_std.so"
+path = "../../../target/release/libovertone_music_std.so"

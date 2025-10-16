@@ -6,7 +6,6 @@ use overtone::{
 pub mod exporters;
 pub mod formats;
 pub mod renderers;
-pub mod examples;
 
 struct MusicStd {}
 

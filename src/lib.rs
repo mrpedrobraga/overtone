@@ -43,7 +43,8 @@ pub enum OvertoneError {
     /// A generic error. This is a code smell and will be removed from Overtone as stability grows.
     GenericError(Option<std::io::Error>),
 
-    TomlParsingError(toml::de::Error),
+    TomlDeserializingError(toml::de::Error),
+    TomlSerializingError(toml::ser::Error),
     StringParsingError(std::string::FromUtf8Error),
 
     IO(IOError),
@@ -60,4 +61,11 @@ pub enum IOError {
     DirectoryNotFound(std::io::Error),
     FileNotFound(std::io::Error),
     DirectoryIsNotOvertoneProject(Option<std::io::Error>),
+    Generic(std::io::Error),
+}
+
+impl From<IOError> for OvertoneError {
+    fn from(value: IOError) -> Self {
+        OvertoneError::IO(value)
+    }
 }

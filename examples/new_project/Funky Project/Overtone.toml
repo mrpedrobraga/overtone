@@ -1,0 +1,9 @@
+[info]
+name = "Funky Project"
+authors = ["Pedro Braga <mrpedrobraga.com>"]
+
+[configuration_overrides]
+
+[[plugins]]
+id = "music-std"
+path = "../../../target/release/libovertone_music_std.so"

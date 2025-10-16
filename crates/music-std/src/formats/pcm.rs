@@ -21,3 +21,18 @@ impl RenderResult for AudioPcm {
         self
     }
 }
+
+impl AudioPcm {
+    pub fn example() -> Self {
+        let sample_rate =  44100;
+        let mut content = Vec::new();
+
+        for t in (0..sample_rate).map(|x| x as f32 / sample_rate as f32) {
+            let sample = (t * (440.0 - t * 220.0) * 2.0 * std::f32::consts::PI).sin();
+            let amplitude = i16::MAX as f32;
+            content.push((sample * amplitude) as i16);
+        }
+
+        Self { sample_rate, content }
+    }
+}

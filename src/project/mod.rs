@@ -22,12 +22,12 @@ pub mod arrangement;
 pub mod resource;
 
 use super::{plugin::LoadedPlugin, DependencyId, Info, OvertoneError};
+use crate::project::arrangement::Arrangement;
 use crate::IOError;
 use arrangement::ArrangementError;
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::project::arrangement::Arrangement;
 
 /// An Overtone project.
 #[derive(Debug)]
@@ -68,18 +68,18 @@ const DEFAULT_ARRANGEMENTS_DIRECTORY_PATH: &str = "arrangements";
 pub struct ProjectManifest {
     pub info: ProjectInfo,
     #[serde(default)]
-    pub path_overrides: ProjectPathOverrides,
+    pub configuration_overrides: ConfigurationOverrides,
     pub plugins: Vec<PluginDependencyEntry>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectInfo {
     pub name: String,
-    pub authors: Option<Vec<String>>,
+    pub authors: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
-pub struct ProjectPathOverrides {
+pub struct ConfigurationOverrides {
     arrangements_dir: Option<PathBuf>,
     default_export_dir: Option<PathBuf>,
 }
@@ -98,7 +98,17 @@ impl ProjectManifest {
         let manifest_file_raw = fs::read(path).map_err(|e| OvertoneError::GenericError(Some(e)))?;
         let manifest_str =
             String::from_utf8(manifest_file_raw).map_err(OvertoneError::StringParsingError)?;
-        toml::from_str(&manifest_str).map_err(OvertoneError::TomlParsingError)
+        toml::from_str(&manifest_str).map_err(OvertoneError::TomlDeserializingError)
+    }
+
+    pub fn save_to_path<P: AsRef<Path>>(&self, path: P) -> Result<(), OvertoneError> {
+        fs::write(
+            path,
+            toml::to_string_pretty(self).map_err(OvertoneError::TomlSerializingError)?,
+        )
+        .map_err(IOError::Generic)?;
+
+        Ok(())
     }
 
     /// Loads a project manifest from a path to a directory that contains an `Overtone.toml` file.
@@ -136,7 +146,7 @@ impl<'a> Project<'a> {
     pub fn load_from_directory<P: AsRef<Path>>(path: P) -> Result<Self, OvertoneError> {
         let file = ProjectManifest::load_from_directory(&path)?;
 
-        let content = ProjectContent::load_from_directory(&path, &file.path_overrides)?;
+        let content = ProjectContent::load_from_directory(&path, &file.configuration_overrides)?;
 
         Ok(Project {
             file,
@@ -144,6 +154,46 @@ impl<'a> Project<'a> {
             loaded_plugins: vec![],
             content,
         })
+    }
+
+    /// Saves the project to the given directory.
+    ///
+    /// If the path given here is `/home/user/Music/`, and the project is named "Game OST",
+    /// it will create a `/home/user/Music/Game OST/Overtone.toml`.
+    pub fn save_to_new_directory<P: AsRef<Path>>(&self, path: P) -> Result<(), OvertoneError> {
+        self.initialize_directory(&path)?;
+        self.file.save_to_path(
+            path.as_ref()
+                .join(self.file.info.name.as_str())
+                .join(OVERTONE_PROJECT_FILE_NAME),
+        )?;
+        Ok(())
+    }
+
+    pub fn initialize_directory<P: AsRef<Path>>(&self, path: P) -> Result<(), OvertoneError> {
+        let path = path.as_ref();
+
+        if !path.is_dir() {
+            return Err(OvertoneError::ProjectError(
+                ProjectError::SaveLocationNotADirectory,
+            ));
+        }
+
+        let path = path.join(self.file.info.name.as_str());
+        let path: &Path = path.as_ref();
+
+        if path.exists() {
+            return Err(OvertoneError::ProjectError(
+                ProjectError::SaveLocationAlreadyExists,
+            ));
+        }
+
+        std::fs::create_dir(&path).map_err(IOError::Generic)?;
+        std::fs::create_dir(&path.join("assets")).map_err(IOError::Generic)?;
+        std::fs::create_dir(&path.join("arrangements")).map_err(IOError::Generic)?;
+        std::fs::create_dir(&path.join("exports")).map_err(IOError::Generic)?;
+
+        Ok(())
     }
 
     /// Quick way of retrieving a project's plugins.
@@ -189,14 +239,13 @@ impl ProjectContent {
     /// into memory :-)
     pub fn load_from_directory<P: AsRef<Path>>(
         path_str: P,
-        path_overrides: &ProjectPathOverrides,
+        path_overrides: &ConfigurationOverrides,
     ) -> Result<Self, OvertoneError> {
-        let arrangements: Vec<Arrangement> =
-            load_project_arrangements(path_str, path_overrides)
-                .map_err(OvertoneError::ArrangementError)?
-                .into_iter()
-                .collect::<Result<_, _>>()
-                .map_err(OvertoneError::ArrangementError)?;
+        let arrangements: Vec<Arrangement> = load_project_arrangements(path_str, path_overrides)
+            .map_err(OvertoneError::ArrangementError)?
+            .into_iter()
+            .collect::<Result<_, _>>()
+            .map_err(OvertoneError::ArrangementError)?;
 
         Ok(Self { arrangements })
     }
@@ -205,7 +254,7 @@ impl ProjectContent {
 // TODO: This will be refactored out somewhere else.
 fn load_project_arrangements<P: AsRef<Path>>(
     path: P,
-    path_overrides: &ProjectPathOverrides,
+    path_overrides: &ConfigurationOverrides,
 ) -> Result<Vec<Result<Arrangement, ArrangementError>>, ArrangementError> {
     let default_arrangements_directory_path: &Path = Path::new(DEFAULT_ARRANGEMENTS_DIRECTORY_PATH);
     let dir_path = if let Some(path_buf) = &path_overrides.arrangements_dir {
@@ -237,7 +286,10 @@ fn load_project_arrangements<P: AsRef<Path>>(
 // MARK: Errors
 
 #[derive(Debug)]
-pub enum ProjectError {}
+pub enum ProjectError {
+    SaveLocationAlreadyExists,
+    SaveLocationNotADirectory,
+}
 
 impl From<ProjectError> for OvertoneError {
     fn from(value: ProjectError) -> Self {
