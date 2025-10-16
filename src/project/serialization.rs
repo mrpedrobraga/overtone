@@ -1,9 +1,9 @@
 use crate::{
+    api::errors::{IOError, OvertoneApiError},
     arrangement::{
         errors::ArrangementError,
         serialization::{load_arrangement_from_directory, ArrangementHeader},
     },
-    api::errors::{IOError, OvertoneApiError},
     plugin::dependency::PluginDependencyEntry,
     project::ProjectDependencies,
 };
@@ -13,8 +13,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
-const OVERTONE_PROJECT_FILE_NAME: &'static str = "Overtone.toml";
-const OVERTONE_ARRANGEMENTS_FOLDER_PATH: &'static str = "arrangements";
+const OVERTONE_PROJECT_FILE_NAME: &str = "Overtone.toml";
+const OVERTONE_ARRANGEMENTS_FOLDER_PATH: &str = "arrangements";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectFile {
@@ -51,8 +51,8 @@ pub fn load_project_file<P: AsRef<Path>>(path: P) -> Result<ProjectFile, Overton
     Ok(proj_file)
 }
 
-pub fn load_project_from_directory(path_str: &String) -> Result<ProjectFile, OvertoneApiError> {
-    let dir = match fs::read_dir(path_str.clone()) {
+pub fn load_project_from_directory(path_str: &str) -> Result<ProjectFile, OvertoneApiError> {
+    let dir = match fs::read_dir(path_str) {
         Ok(v) => v,
         Err(e) => return Err(OvertoneApiError::IO(IOError::DirectoryNotFound(e))),
     };
@@ -84,10 +84,10 @@ pub fn load_project_deps_from_directory(
     path_overrides: &Option<ProjectPathOverrides>,
 ) -> Result<ProjectDependencies, OvertoneApiError> {
     let arrangements: Vec<ArrangementHeader> = load_project_arrangements(path_str, path_overrides)
-        .map_err(|e| OvertoneApiError::ArrangementError(e))?
+        .map_err(OvertoneApiError::ArrangementError)?
         .into_iter()
         .collect::<Result<_, _>>()
-        .map_err(|e| OvertoneApiError::ArrangementError(e))?;
+        .map_err(OvertoneApiError::ArrangementError)?;
 
     Ok(ProjectDependencies { arrangements })
 }
@@ -100,15 +100,14 @@ fn load_project_arrangements(
     let arrangements_dir_path = PathBuf::from(path_str).join(
         path_overrides
             .as_ref()
-            .map(|po| po.arrangements_dir.as_ref())
-            .flatten()
+            .and_then(|po| po.arrangements_dir.as_ref())
             .unwrap_or(&PathBuf::from(OVERTONE_ARRANGEMENTS_FOLDER_PATH)),
     );
 
     let dir = match fs::read_dir(arrangements_dir_path.clone()) {
         Ok(v) => v,
         Err(e) => {
-            fs::create_dir(arrangements_dir_path).map_err(|e| ArrangementError::IOError(e))?;
+            fs::create_dir(arrangements_dir_path).map_err(ArrangementError::IOError)?;
             return Ok(vec![]);
         }
     };
@@ -116,7 +115,7 @@ fn load_project_arrangements(
     let arrangement_headers: Vec<Result<ArrangementHeader, ArrangementError>> = dir
         .into_iter()
         .filter_map(|entry| {
-            let e = entry.map_err(|e| ArrangementError::IOError(e));
+            let e = entry.map_err(ArrangementError::IOError);
             let e = match e {
                 Ok(v) => v,
                 Err(err) => return Some(Err(err)),

@@ -8,7 +8,7 @@ pub mod serialization;
 use self::serialization::{
     load_project_deps_from_directory, load_project_from_directory, ProjectFile,
 };
-use super::{api::errors::OvertoneApiError, utils::info::Info, plugin::PluginBox};
+use super::{api::errors::OvertoneApiError, plugin::PluginBox, utils::info::Info};
 use std::path::PathBuf;
 
 /// Overtone Project, holds references to in-disk dependencies and manages
@@ -30,7 +30,7 @@ pub struct ProjectDependencies {
 
 impl<'a> Info for Project<'a> {
     fn get_name(&self) -> &str {
-        return self.file.info.name.as_str();
+        self.file.info.name.as_str()
     }
 }
 
@@ -70,7 +70,7 @@ impl<'a> Project<'a> {
     }
 
     // Loads a plugin from a shared library located at the designated relative path.
-    pub fn load_plugin(&'a mut self, id: String) -> Result<&'a PluginBox, PluginError> {
+    pub fn load_plugin(&'a mut self, id: String) -> Result<&'a PluginBox<'a>, PluginError> {
         if let Some(_v) = self.loaded_plugins.iter().find(|p| p.source.id == id) {
             return Err(PluginError::PluginAlreadyLoaded());
         }
@@ -92,6 +92,6 @@ impl<'a> Project<'a> {
 
         let loaded: &PluginBox = self.loaded_plugins.push_and_get(loaded);
 
-        return Ok(loaded);
+        Ok(loaded)
     }
 }

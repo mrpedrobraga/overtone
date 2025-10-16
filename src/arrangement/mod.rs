@@ -21,9 +21,7 @@ impl<'a> Resource<'a> for Arrangement {
         &self,
         field_id: &'static str,
     ) -> Result<ResourceFieldValue, ResourceFieldError> {
-        match field_id {
-            _ => Err(ResourceFieldError::FieldDoesntExist),
-        }
+        Err(ResourceFieldError::FieldDoesntExist)
     }
 
     fn set_field_value(
