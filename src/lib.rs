@@ -29,4 +29,35 @@ pub mod editor;
 pub mod plugin;
 pub mod project;
 pub mod renderer;
-pub mod utils;
+
+/// Trait that allows extracting some metadata from foreign types.
+pub trait Info {
+    fn get_name(&self) -> &str;
+}
+
+pub type RefStr = std::rc::Rc<str>;
+pub type DependencyId = String;
+
+#[derive(Debug)]
+pub enum OvertoneError {
+    /// A generic error. This is a code smell and will be removed from Overtone as stability grows.
+    GenericError(Option<std::io::Error>),
+
+    TomlParsingError(toml::de::Error),
+    StringParsingError(std::string::FromUtf8Error),
+
+    IO(IOError),
+
+    ProjectError(project::ProjectError),
+    ArrangementError(crate::project::arrangement::errors::ArrangementError),
+    PluginError(crate::plugin::PluginError),
+}
+
+#[derive(Debug)]
+pub enum IOError {
+    /// Another code smell.
+    ErrorOpeningProject(std::io::Error),
+    DirectoryNotFound(std::io::Error),
+    FileNotFound(std::io::Error),
+    DirectoryIsNotOvertoneProject(Option<std::io::Error>),
+}

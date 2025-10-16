@@ -1,4 +1,4 @@
-use crate::utils::DependencyId;
+use crate::DependencyId;
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
 use crate::project::serialization::dependency::DependencyEntry;

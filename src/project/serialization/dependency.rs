@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::utils::DependencyId;
+use crate::DependencyId;
 
 /// Simple trait which describes an overtone dependency.
 /// This trait will fuel power actions within the codebase, such as

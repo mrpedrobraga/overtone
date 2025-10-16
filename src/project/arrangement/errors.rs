@@ -1,6 +1,6 @@
 use std::string::FromUtf8Error;
 
-use crate::editor::errors::OvertoneError;
+use crate::OvertoneError;
 
 #[derive(Debug)]
 pub enum ArrangementError {

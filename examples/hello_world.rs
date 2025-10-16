@@ -1,10 +1,7 @@
 use std::path::PathBuf;
 
-use overtone::{
-    editor::errors::OvertoneError,
-    project::Project,
-};
-use overtone::project::arrangement::{serialization::load_arrangement_from_directory, Arrangement};
+use overtone::{project::Project, OvertoneError};
+use overtone::project::arrangement::{Arrangement, ArrangementHeader};
 
 fn main() -> Result<(), OvertoneError> {
     // Load project
@@ -22,7 +19,7 @@ fn main() -> Result<(), OvertoneError> {
 
     // Load this song from disk (WIP).
     let song = Arrangement {
-        header: load_arrangement_from_directory(
+        header: ArrangementHeader::load_from_directory(
             "./examples/Untitled Project/arrangements/Untitled Song".into(),
         )?
     };

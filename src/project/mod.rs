@@ -1,22 +1,36 @@
-use crate::plugin::{dependency::PluginDependencyEntry, errors::PluginError};
-pub mod errors;
+//! # Project
+//!
+//! An Overtone [`Project`] is a directory containing arrangements,
+//! plugins, resources, etc.
+//!
+//! On disk, an Overtone project is recognised as any directory containing a valid
+//! `Overtone.toml` manifest.
+//!
+//! The contents of a project are lazy-loaded to save on memory. Arrangements, plugins
+//! and other resources are only loaded when needed and can be unloaded when no longer in use.
+//! This can save a ton of memory, though, it puts some constraints on how to write code
+//! for this library. You see, the contents of a project are separate files that will be
+//! interwoven in references and dependencies that shan't be broken.
+//!
+//! ## Editing a Project
+//!
+//! To maintain the invariants of a project intact, a project should be edited through
+//! [`super::editor`].
+
+use crate::plugin::{PluginDependencyEntry, PluginError};
+pub mod arrangement;
 pub mod resource;
 pub mod serialization;
-pub mod arrangement;
 
-use super::{editor::errors::OvertoneError, plugin::PluginBox};
-use std::path::{Path, PathBuf};
-use std::fs;
-use serde_derive::{Deserialize, Serialize};
-use arrangement::serialization::ArrangementHeader;
-use crate::editor::errors::IOError;
+use super::{plugin::LoadedPlugin, Info, OvertoneError};
+use crate::IOError;
 use arrangement::errors::ArrangementError;
-use arrangement::serialization::load_arrangement_from_directory;
-use crate::utils::{Info};
+use serde_derive::{Deserialize, Serialize};
+use std::fs;
+use std::path::{Path, PathBuf};
+use crate::project::arrangement::ArrangementHeader;
 
-/// Overtone Project, holds references to in-disk dependencies and manages
-/// changes upon them (refactoring). It also contains loaded references to
-/// the dependencies, and manages loading/unloading them.
+/// An Overtone project.
 #[derive(Debug)]
 pub struct Project<'a> {
     /// The contents of the `Overtone.toml` manifest that marks
@@ -29,10 +43,16 @@ pub struct Project<'a> {
     /// The plugins loaded into this project.
     /// Plugins are lazy-loaded, so this holds
     /// references to them when they load.
-    pub loaded_plugins: Vec<PluginBox<'a>>,
+    pub loaded_plugins: Vec<LoadedPlugin<'a>>,
 
     /// The "content" of a project.
     pub content: ProjectContent,
+}
+
+impl<'a> Info for Project<'a> {
+    fn get_name(&self) -> &str {
+        self.file.info.name.as_str()
+    }
 }
 
 #[derive(Debug)]
@@ -42,85 +62,14 @@ pub struct ProjectContent {
     pub arrangements: Vec<ArrangementHeader>,
 }
 
-impl<'a> Info for Project<'a> {
-    fn get_name(&self) -> &str {
-        self.file.info.name.as_str()
-    }
-}
-
-impl<'a> Project<'a> {
-    pub fn new(file: ProjectManifest) -> Self {
-        Self {
-            file,
-            directory: None,
-            loaded_plugins: Vec::new(),
-            content: ProjectContent {
-                arrangements: vec![],
-            },
-        }
-    }
-
-    /// Loads an overtone project from a directory, if there's a suitable manifest file.
-    pub fn load_from_directory<S: Into<String>>(path: S) -> Result<Self, OvertoneError> {
-        let path_str: String = path.into();
-        let file = load_project_from_directory(&path_str)?;
-
-        let dependencies = load_project_deps_from_directory(&path_str, &file.path_overrides)?;
-
-        Ok(Project {
-            file,
-            directory: Some(PathBuf::from(path_str)),
-            loaded_plugins: vec![],
-            content: dependencies,
-        })
-    }
-
-    pub fn get_plugins(&self) -> &Option<Vec<PluginDependencyEntry>> {
-        &self.file.plugins
-    }
-
-    pub fn iter_loaded_plugins(&'a self) -> std::slice::Iter<'a, PluginBox<'a>> {
-        self.loaded_plugins.iter()
-    }
-
-    /// Loads a plugin from a shared library located at the designated relative path.
-    pub fn load_plugin(&'a mut self, plugin_id: String) -> Result<&'a PluginBox<'a>, PluginError> {
-        if let Some(_v) = self.loaded_plugins.iter().find(|p| p.source.id == plugin_id) {
-            return Err(PluginError::PluginAlreadyLoaded());
-        }
-
-        let plugins = match &self.file.plugins {
-            None => return Err(PluginError::MissingPlugin(plugin_id)),
-            Some(v) => v,
-        };
-        let plugin_ref = plugins.iter().find(|plug_ref| plug_ref.id == plugin_id);
-        let plugin_ref = match plugin_ref {
-            None => return Err(PluginError::MissingPlugin(plugin_id)),
-            Some(p) => p,
-        };
-
-        let loaded: PluginBox = PluginBox::from_dependency_decl(&self.directory, plugin_ref)?;
-
-        // TODO: Call the `on_plugin_load` callback passing a view to the project.
-        //loaded.plugin.on_plugin_load(self);
-
-        let loaded: &PluginBox = {
-            self.loaded_plugins.push(loaded);
-            self.loaded_plugins.last_mut().unwrap()
-        };
-
-        Ok(loaded)
-    }
-}
-
 const OVERTONE_PROJECT_FILE_NAME: &str = "Overtone.toml";
-const OVERTONE_ARRANGEMENTS_FOLDER_PATH: &str = "arrangements";
+const DEFAULT_ARRANGEMENTS_DIRECTORY_PATH: &str = "arrangements";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectManifest {
     pub info: ProjectInfo,
-    pub path_overrides: Option<ProjectPathOverrides>,
-    pub plugins: Option<Vec<PluginDependencyEntry>>,
+    pub path_overrides: ProjectPathOverrides,
+    pub plugins: Vec<PluginDependencyEntry>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -135,100 +84,155 @@ pub struct ProjectPathOverrides {
     default_export_dir: Option<PathBuf>,
 }
 
-pub fn load_project_file<P: AsRef<Path>>(path: P) -> Result<ProjectManifest, OvertoneError> {
-    let proj_file_raw = match fs::read(path) {
-        Err(e) => return Err(OvertoneError::GenericError(Some(e))),
-        Ok(v) => match String::from_utf8(v) {
-            Err(e) => return Err(OvertoneError::StringParsingError(e)),
-            Ok(v) => v,
-        },
-    };
-    let proj_file: Result<ProjectManifest, _> = toml::from_str(proj_file_raw.as_str());
-    let proj_file = match proj_file {
-        Err(e) => return Err(OvertoneError::TomlParsingError(e)),
-        Ok(v) => v,
-    };
-    Ok(proj_file)
+impl ProjectManifest {
+    /// Loads a project manifest from a path to the `Overtone.toml` file.
+    pub fn load_from_file<P: AsRef<Path>>(path: P) -> Result<Self, OvertoneError> {
+        let manifest_file_raw = fs::read(path).map_err(|e| OvertoneError::GenericError(Some(e)))?;
+        let manifest_str =
+            String::from_utf8(manifest_file_raw).map_err(OvertoneError::StringParsingError)?;
+        toml::from_str(&manifest_str).map_err(OvertoneError::TomlParsingError)
+    }
+
+    /// Loads a project manifest from a path to a directory that contains an `Overtone.toml` file.
+    pub fn load_from_directory<P: AsRef<Path>>(path: P) -> Result<Self, OvertoneError> {
+        let dir =
+            fs::read_dir(path).map_err(|e| OvertoneError::IO(IOError::DirectoryNotFound(e)))?;
+
+        let dir_entry = dir
+            .filter_map(Result::ok)
+            .find(|v| v.file_name() == OVERTONE_PROJECT_FILE_NAME)
+            .ok_or_else(|| OvertoneError::IO(IOError::DirectoryIsNotOvertoneProject(None)))?;
+
+        Self::load_from_file(dir_entry.path())
+    }
 }
 
-pub fn load_project_from_directory(path_str: &str) -> Result<ProjectManifest, OvertoneError> {
-    let dir = match fs::read_dir(path_str) {
-        Ok(v) => v,
-        Err(e) => return Err(OvertoneError::IO(IOError::DirectoryNotFound(e))),
-    };
-    let dir_entry = dir.into_iter().find(|e| match e {
-        Err(_) => false,
-        Ok(v) => v.file_name() == OVERTONE_PROJECT_FILE_NAME,
-    });
-    let dir_entry = match dir_entry {
-        None => {
-            return Err(OvertoneError::IO(
-                IOError::DirectoryIsNotOvertoneProject(None),
-            ))
+impl<'a> Project<'a> {
+    /// Creates a new project with configuration.
+    ///
+    /// This function takes a [`ProjectManifest`] but don't get confused,
+    /// no `Overtone.toml` file will exist on disk at this point. If anything,
+    /// the manifest will be reified whenever the project is saved to disk.
+    pub fn new(file: ProjectManifest) -> Self {
+        Self {
+            file,
+            directory: None,
+            loaded_plugins: Vec::new(),
+            content: ProjectContent {
+                arrangements: vec![],
+            },
         }
-        Some(v) => match v {
-            Err(e) => {
-                return Err(OvertoneError::IO(
-                    IOError::DirectoryIsNotOvertoneProject(Some(e)),
-                ))
-            }
-            Ok(v) => v,
-        },
-    };
-    let file = load_project_file(dir_entry.path())?;
-    Ok(file)
+    }
+
+    /// Loads an overtone project from a directory, if there's a suitable manifest file.
+    pub fn load_from_directory<P: AsRef<Path>>(path: P) -> Result<Self, OvertoneError> {
+        let file = ProjectManifest::load_from_directory(&path)?;
+
+        let content = ProjectContent::load_from_directory(&path, &file.path_overrides)?;
+
+        Ok(Project {
+            file,
+            directory: Some(PathBuf::from(path.as_ref())),
+            loaded_plugins: vec![],
+            content,
+        })
+    }
+
+    /// Quick way of retrieving a project's plugins.
+    pub fn get_plugins(&self) -> &Vec<PluginDependencyEntry> {
+        &self.file.plugins
+    }
+
+    /// Returns an iterators through the loaded plugins. Might be useful.
+    pub fn iter_loaded_plugins(&'a self) -> std::slice::Iter<'a, LoadedPlugin<'a>> {
+        self.loaded_plugins.iter()
+    }
+
+    /// Loads a plugin given its id. The plugin in question must have been "installed," that is,
+    /// have a dependency entry in the project containing the path of the shared library.
+    ///
+    /// This function also conveniently returns a reference to the [`LoadedPlugin`].
+    pub fn load_plugin(
+        &'a mut self,
+        plugin_id: String,
+    ) -> Result<&'a LoadedPlugin<'a>, PluginError> {
+        if self.loaded_plugins.iter().any(|p| p.source.id == plugin_id) {
+            return Err(PluginError::PluginAlreadyLoaded());
+        }
+
+        let entry = self
+            .file
+            .plugins
+            .iter()
+            .find(|p| p.id == plugin_id)
+            .ok_or_else(|| PluginError::MissingPlugin(plugin_id.clone()))?;
+
+        let loaded = LoadedPlugin::load_from_dependency_entry(&self.directory, entry)?;
+
+        self.loaded_plugins.push(loaded);
+        Ok(self.loaded_plugins.last().unwrap())
+    }
 }
 
-pub fn load_project_deps_from_directory(
-    path_str: &String,
-    path_overrides: &Option<ProjectPathOverrides>,
-) -> Result<ProjectContent, OvertoneError> {
-    let arrangements: Vec<ArrangementHeader> = load_project_arrangements(path_str, path_overrides)
-        .map_err(OvertoneError::ArrangementError)?
-        .into_iter()
-        .collect::<Result<_, _>>()
-        .map_err(OvertoneError::ArrangementError)?;
+impl ProjectContent {
+    /// Fetches the project's contents from disk.
+    ///
+    /// This function only loads the headers and metadata and does not actually load everything
+    /// into memory :-)
+    pub fn load_from_directory<P: AsRef<Path>>(
+        path_str: P,
+        path_overrides: &ProjectPathOverrides,
+    ) -> Result<Self, OvertoneError> {
+        let arrangements: Vec<ArrangementHeader> =
+            load_project_arrangements(path_str, path_overrides)
+                .map_err(OvertoneError::ArrangementError)?
+                .into_iter()
+                .collect::<Result<_, _>>()
+                .map_err(OvertoneError::ArrangementError)?;
 
-    Ok(ProjectContent { arrangements })
+        Ok(Self { arrangements })
+    }
 }
 
 // TODO: This will be refactored out somewhere else.
-fn load_project_arrangements(
-    path_str: &String,
-    path_overrides: &Option<ProjectPathOverrides>,
+fn load_project_arrangements<P: AsRef<Path>>(
+    path: P,
+    path_overrides: &ProjectPathOverrides,
 ) -> Result<Vec<Result<ArrangementHeader, ArrangementError>>, ArrangementError> {
-    let arrangements_dir_path = PathBuf::from(path_str).join(
-        path_overrides
-            .as_ref()
-            .and_then(|po| po.arrangements_dir.as_ref())
-            .unwrap_or(&PathBuf::from(OVERTONE_ARRANGEMENTS_FOLDER_PATH)),
-    );
-
-    let dir = match fs::read_dir(arrangements_dir_path.clone()) {
-        Ok(v) => v,
-        Err(e) => {
-            fs::create_dir(arrangements_dir_path).map_err(ArrangementError::IOError)?;
-            return Ok(vec![]);
-        }
+    let default_arrangements_directory_path: &Path = Path::new(DEFAULT_ARRANGEMENTS_DIRECTORY_PATH);
+    let dir_path = if let Some(path_buf) = &path_overrides.arrangements_dir {
+        path_buf.as_path()
+    } else {
+        default_arrangements_directory_path
     };
 
-    let arrangement_headers: Vec<Result<ArrangementHeader, ArrangementError>> = dir
-        .into_iter()
-        .filter_map(|entry| {
-            let e = entry.map_err(ArrangementError::IOError);
-            let e = match e {
-                Ok(v) => v,
-                Err(err) => return Some(Err(err)),
-            };
+    let dir_path = path.as_ref().join(&dir_path);
 
-            if e.path().is_dir() {
-                Some(Ok(e))
-            } else {
-                None
-            }
+    // This will read a directory if it exists or create it if it doesn't.
+    let dir = fs::read_dir(&dir_path).or_else(|e| {
+        fs::create_dir_all(&dir_path).map_err(ArrangementError::IOError)?;
+        Ok(fs::read_dir(&dir_path).map_err(ArrangementError::IOError)?)
+    })?;
+
+    let headers = dir
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            entry
+                .path()
+                .is_dir()
+                .then(|| ArrangementHeader::load_from_directory(entry.path()))
         })
-        .map(|e| load_arrangement_from_directory(e?.path()))
         .collect();
 
-    Ok(arrangement_headers)
+    Ok(headers)
+}
+// MARK: Errors
+
+#[derive(Debug)]
+pub enum ProjectError {}
+
+impl From<ProjectError> for OvertoneError {
+    fn from(value: ProjectError) -> Self {
+        OvertoneError::ProjectError(value)
+    }
 }

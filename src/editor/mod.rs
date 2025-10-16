@@ -1,7 +1,12 @@
-use crate::editor::errors::OvertoneError;
-use crate::project::Project;
+//! # The Editor API
+//!
+//! This module has types, functions and utilities for editing an Overtone
+//! project while keeping invariants intact.
+//!
+//! The GUI uses this module to edit the project, too.
 
-pub mod errors;
+use crate::OvertoneError;
+use crate::project::Project;
 
 /// Edits an overtone Project
 pub struct Editor<'a> {
@@ -20,12 +25,12 @@ impl<'a> Editor<'a> {
     }
 }
 
-/// A client in identifier
+/// Identification of the Client associated with a given action.
 pub struct Client<'a> {
     id: &'a str
 }
 
-/// An action which can be consumed by an editor.
+/// Describes an action the editor can perform.
 pub struct Action {}
 
 impl Action {}
