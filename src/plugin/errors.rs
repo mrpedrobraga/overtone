@@ -1,4 +1,4 @@
-use crate::api::errors::OvertoneApiError;
+use crate::editor::errors::OvertoneError;
 
 #[derive(Debug)]
 pub enum PluginError {
@@ -12,8 +12,8 @@ pub enum PluginError {
     LibraryIsNotOvertonePlugin(),
 }
 
-impl From<PluginError> for OvertoneApiError {
+impl From<PluginError> for OvertoneError {
     fn from(value: PluginError) -> Self {
-        OvertoneApiError::PluginError(value)
+        OvertoneError::PluginError(value)
     }
 }

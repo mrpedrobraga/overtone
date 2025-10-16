@@ -1,12 +1,12 @@
 use std::path::PathBuf;
 
 use overtone::{
-    arrangement::{serialization::load_arrangement_from_directory, Arrangement},
-    api::errors::OvertoneApiError,
+    editor::errors::OvertoneError,
     project::Project,
 };
+use overtone::project::arrangement::{serialization::load_arrangement_from_directory, Arrangement};
 
-fn main() -> Result<(), OvertoneApiError> {
+fn main() -> Result<(), OvertoneError> {
     // Load project
     let mut _p = Project::load_from_directory("./examples/Untitled Project")?;
 

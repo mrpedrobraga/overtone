@@ -1,6 +1,7 @@
-use crate::{serialization::dependency::DependencyEntry, utils::types::DependencyId};
+use crate::utils::DependencyId;
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
+use crate::project::serialization::dependency::DependencyEntry;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PluginDependencyEntry {

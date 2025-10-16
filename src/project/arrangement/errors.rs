@@ -1,6 +1,6 @@
 use std::string::FromUtf8Error;
 
-use crate::api::errors::OvertoneApiError;
+use crate::editor::errors::OvertoneError;
 
 #[derive(Debug)]
 pub enum ArrangementError {
@@ -12,8 +12,8 @@ pub enum ArrangementError {
     HeaderFormatError(toml::de::Error),
 }
 
-impl From<ArrangementError> for OvertoneApiError {
+impl From<ArrangementError> for OvertoneError {
     fn from(value: ArrangementError) -> Self {
-        OvertoneApiError::ArrangementError(value)
+        OvertoneError::ArrangementError(value)
     }
 }

@@ -1,6 +1,7 @@
+use crate::editor::errors::OvertoneError;
 use crate::project::Project;
 
-use super::errors::OvertoneApiError;
+pub mod errors;
 
 /// Edits an overtone Project
 pub struct Editor<'a> {
@@ -14,12 +15,12 @@ impl<'a> Editor<'a> {
         }
     }
 
-    fn do_action(&mut self, client: &Client<'a>, action: Action) -> Result<(), OvertoneApiError> {
+    fn do_action(&mut self, client: &Client<'a>, action: Action) -> Result<(), OvertoneError> {
         todo!()
     }
 }
 
-/// A client in identifier 
+/// A client in identifier
 pub struct Client<'a> {
     id: &'a str
 }

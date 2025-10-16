@@ -18,18 +18,15 @@
 //! ```
 //!
 //! With that, you can modify the project in memory, until it's time to save it.
+//!
+//! Needless to say, editing programs using the API is cumbersome and using the GUI is better.
 
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unreachable_code)]
 
-pub mod api;
-pub mod arrangement;
-pub mod contributions;
+pub mod editor;
 pub mod plugin;
-pub mod prelude;
 pub mod project;
 pub mod renderer;
-pub mod resource;
-pub mod serialization;
 pub mod utils;

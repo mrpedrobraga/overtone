@@ -9,12 +9,13 @@
 use std::string::FromUtf8Error;
 
 use crate::{
-    arrangement::errors::ArrangementError, plugin::errors::PluginError,
+    plugin::errors::PluginError,
     project::errors::ProjectError,
 };
+use crate::project::arrangement::errors::ArrangementError;
 
 #[derive(Debug)]
-pub enum OvertoneApiError {
+pub enum OvertoneError {
     /// A generic error. This is a code smell and will be removed from Overtone as stability grows.
     GenericError(Option<std::io::Error>),
 

@@ -1,4 +1,4 @@
-use crate::contributions::PluginContributions;
+use contributions::PluginContributions;
 
 use self::dependency::PluginDependencyEntry;
 use self::errors::PluginError;
@@ -12,6 +12,7 @@ use std::path::PathBuf;
 pub mod dependency;
 pub mod errors;
 pub mod serialization;
+pub mod contributions;
 
 #[allow(dead_code)]
 /// An Overtone plugin, which will be loaded, registered,
@@ -85,5 +86,14 @@ impl<'a> PluginBox<'a> {
 impl<'a> Debug for PluginBox<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(format!("[Plugin '{}']", self.plugin.get_name()).as_str())
+    }
+}
+
+/// Declares a new Overtone [`Plugin`] instance, with everything it might do.
+#[macro_export]
+macro_rules! overtone_plugin {
+    ( $e: expr ) => {
+        #[no_mangle]
+        pub fn get_overtone_plugin() -> Box<dyn $crate::plugin::Plugin> { $e }
     }
 }

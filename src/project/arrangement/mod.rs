@@ -1,4 +1,4 @@
-use crate::resource::{Resource, ResourceFieldError, ResourceFieldValue};
+use crate::project::resource::{Resource, ResourceFieldError, ResourceFieldValue};
 
 use self::serialization::ArrangementHeader;
 
@@ -40,7 +40,7 @@ impl<'a> Resource<'a> for Arrangement {
         Ok(())
     }
 
-    fn save() -> Result<(), crate::resource::ResourceSaveError> {
+    fn save() -> Result<(), crate::project::resource::ResourceSaveError> {
         Ok(())
     }
 }

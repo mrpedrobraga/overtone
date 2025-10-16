@@ -8,7 +8,7 @@
 pub mod render_exporter;
 pub mod render_result;
 use self::render_result::RenderResult;
-use crate::arrangement::Arrangement;
+use crate::project::arrangement::Arrangement;
 
 /// Trait for anything that can render an arrangement to a [`render_result::RenderResult`].
 pub trait Renderer {
