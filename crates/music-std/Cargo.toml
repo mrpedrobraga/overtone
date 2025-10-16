@@ -5,7 +5,13 @@ edition = "2024"
 authors = ["Pedro Braga"]
 
 [dependencies]
-overtone = { path = "../../" }
+overtone = { path = "../.." }
+hound = { version = "3.5.1" }
+serde = { version = "1.0.228" }
+
+[dev-dependencies]
+serde_json = "1.0.145"
+pot = "3.0.1"
 
 [lib]
 crate-type = ["dylib", "rlib"]

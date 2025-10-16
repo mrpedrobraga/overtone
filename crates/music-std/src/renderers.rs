@@ -1,18 +1,18 @@
 use {
-    crate::formats::{AudioPcm, PCM_RENDER_FORMAT_ID},
     overtone::{
         project::arrangement::Arrangement,
         renderer::{RenderResult, Renderer},
     },
     std::collections::HashMap,
 };
+use crate::formats::pcm::{PCM_RENDER_FORMAT_ID};
 
 pub fn get() -> HashMap<String, Box<dyn Renderer>> {
     let mut map: HashMap<String, Box<dyn Renderer>> = HashMap::new();
 
     map.insert(
         "audio-pcm-renderer".to_string(),
-        Box::new(AudioRenderer {}) as Box<dyn Renderer>,
+        Box::new(AudioPCMRenderer {}) as Box<dyn Renderer>,
     );
 
     map
@@ -20,13 +20,13 @@ pub fn get() -> HashMap<String, Box<dyn Renderer>> {
 
 /// Renderer that emits audio from an arrangement.
 #[derive(Default)]
-pub struct AudioRenderer {}
+pub struct AudioPCMRenderer {}
 
-impl Renderer for AudioRenderer {
+impl Renderer for AudioPCMRenderer {
     fn render(&self, arrangement: &Arrangement /* fragment slice */) -> Box<dyn RenderResult> {
-        Box::new(AudioPcm {
-            content: arrangement.meta.name.clone(),
-        })
+        let audio_pcm = crate::examples::get_example_pcm_sample();
+
+        Box::new(audio_pcm)
     }
 
     fn get_render_format_id(&self) -> String {

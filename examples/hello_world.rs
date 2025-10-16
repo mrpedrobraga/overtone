@@ -34,7 +34,7 @@ fn main() -> Result<(), OvertoneError> {
 
     let _ = dbg!(exporter.export(
         &*render_result,
-        PathBuf::from("./examples/Untitled Project/exports/test-export.txt")
+        PathBuf::from("./examples/Untitled Project/exports/test-export.wav")
     ));
 
     Ok(())
