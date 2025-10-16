@@ -20,15 +20,14 @@
 use crate::plugin::{PluginDependencyEntry, PluginError};
 pub mod arrangement;
 pub mod resource;
-pub mod serialization;
 
-use super::{plugin::LoadedPlugin, Info, OvertoneError};
+use super::{plugin::LoadedPlugin, DependencyId, Info, OvertoneError};
 use crate::IOError;
-use arrangement::errors::ArrangementError;
+use arrangement::ArrangementError;
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
-use crate::project::arrangement::ArrangementHeader;
+use crate::project::arrangement::Arrangement;
 
 /// An Overtone project.
 #[derive(Debug)]
@@ -59,7 +58,7 @@ impl<'a> Info for Project<'a> {
 /// Inside every project is a bunch of [`Arrangement`]s.
 /// Here we only keep links to them — they are lazy loaded.
 pub struct ProjectContent {
-    pub arrangements: Vec<ArrangementHeader>,
+    pub arrangements: Vec<Arrangement>,
 }
 
 const OVERTONE_PROJECT_FILE_NAME: &str = "Overtone.toml";
@@ -82,6 +81,14 @@ pub struct ProjectInfo {
 pub struct ProjectPathOverrides {
     arrangements_dir: Option<PathBuf>,
     default_export_dir: Option<PathBuf>,
+}
+
+/// Simple trait which describes a project dependency.
+/// This trait will fuel power actions within the codebase, such as
+/// renaming, moving, deleting, safely.
+pub trait DependencyEntry {
+    fn get_id(&self) -> DependencyId;
+    fn get_path(&self) -> PathBuf;
 }
 
 impl ProjectManifest {
@@ -183,7 +190,7 @@ impl ProjectContent {
         path_str: P,
         path_overrides: &ProjectPathOverrides,
     ) -> Result<Self, OvertoneError> {
-        let arrangements: Vec<ArrangementHeader> =
+        let arrangements: Vec<Arrangement> =
             load_project_arrangements(path_str, path_overrides)
                 .map_err(OvertoneError::ArrangementError)?
                 .into_iter()
@@ -198,7 +205,7 @@ impl ProjectContent {
 fn load_project_arrangements<P: AsRef<Path>>(
     path: P,
     path_overrides: &ProjectPathOverrides,
-) -> Result<Vec<Result<ArrangementHeader, ArrangementError>>, ArrangementError> {
+) -> Result<Vec<Result<Arrangement, ArrangementError>>, ArrangementError> {
     let default_arrangements_directory_path: &Path = Path::new(DEFAULT_ARRANGEMENTS_DIRECTORY_PATH);
     let dir_path = if let Some(path_buf) = &path_overrides.arrangements_dir {
         path_buf.as_path()
@@ -220,7 +227,7 @@ fn load_project_arrangements<P: AsRef<Path>>(
             entry
                 .path()
                 .is_dir()
-                .then(|| ArrangementHeader::load_from_directory(entry.path()))
+                .then(|| Arrangement::load_from_directory(entry.path()))
         })
         .collect();
 

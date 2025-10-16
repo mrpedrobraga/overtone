@@ -15,7 +15,7 @@ use std::path::PathBuf;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::{DependencyId, OvertoneError};
-use crate::project::serialization::dependency::DependencyEntry;
+use crate::project::DependencyEntry;
 use crate::renderer::RenderExporter;
 use crate::renderer::Renderer;
 

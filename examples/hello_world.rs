@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use overtone::{project::Project, OvertoneError};
-use overtone::project::arrangement::{Arrangement, ArrangementHeader};
+use overtone::project::arrangement::{Arrangement};
 
 fn main() -> Result<(), OvertoneError> {
     // Load project
@@ -18,11 +18,9 @@ fn main() -> Result<(), OvertoneError> {
     let exporter = exporters.get("larynx").unwrap();
 
     // Load this song from disk (WIP).
-    let song = Arrangement {
-        header: ArrangementHeader::load_from_directory(
-            "./examples/Untitled Project/arrangements/Untitled Song".into(),
-        )?
-    };
+    let song = Arrangement::load_from_directory(
+        "./examples/Untitled Project/arrangements/Untitled Song".into(),
+    )?;
 
     // Render the song to an intermediary render result.
     let render_result = renderer.render(&song);
