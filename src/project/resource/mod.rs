@@ -49,15 +49,15 @@ pub enum ResourceFieldValue {
 /// Error originated from attempting to set the value of a field in a resource.
 pub enum ResourceSetFieldError {
     /// Field doesn't exist.
-    NoSuchField
+    NoSuchField,
+    /// Field doesn't accept a value of the given type.
+    IncompatibleType,
 }
 
 /// Error originated from attempting to retrieve the value of a field in a resource.
 pub enum ResourceGetFieldError {
     /// Field doesn't exist.
     NoSuchField,
-    /// Field doesn't accept a value of the given type.
-    IncompatibleType,
 }
 
 /// Error originated from trying to save a resource to disk.

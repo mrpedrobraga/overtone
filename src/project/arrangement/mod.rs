@@ -31,7 +31,7 @@ use std::path::PathBuf;
 use std::fs;
 use std::string::FromUtf8Error;
 use crate::{DependencyId, OvertoneError};
-use crate::project::resource::{Resource, ResourceFieldError, ResourceFieldValue};
+use crate::project::resource::{Resource, ResourceFieldInfo, ResourceFieldValue, ResourceGetFieldError, ResourceSetFieldError};
 use crate::project::DependencyEntry;
 
 pub mod time;
@@ -104,28 +104,30 @@ impl Arrangement {
 }
 
 impl<'a> Resource<'a> for Arrangement {
-    fn get_fields_info() -> &'a [&'static str] {
-        &["name"]
+    fn get_fields_info() -> &'a [ResourceFieldInfo] {
+        &[
+            ResourceFieldInfo { name: "name" }
+        ]
     }
 
     fn get_field_value(
         &self,
         field_id: &'static str,
-    ) -> Result<ResourceFieldValue, ResourceFieldError> {
-        Err(ResourceFieldError::FieldDoesntExist)
+    ) -> Result<ResourceFieldValue, ResourceGetFieldError> {
+        Err(ResourceGetFieldError::NoSuchField)
     }
 
     fn set_field_value(
         &mut self,
         field_id: &'static str,
         value: ResourceFieldValue,
-    ) -> Result<(), ResourceFieldError> {
+    ) -> Result<(), ResourceSetFieldError> {
         match field_id {
             "name" => match value {
                 ResourceFieldValue::Text(t) => self.meta.name = t.to_string(),
-                _ => return Err(ResourceFieldError::UnacceptableValue),
+                _ => return Err(ResourceSetFieldError::IncompatibleType),
             },
-            _ => return Err(ResourceFieldError::FieldDoesntExist),
+            _ => return Err(ResourceSetFieldError::NoSuchField),
         }
 
         Ok(())

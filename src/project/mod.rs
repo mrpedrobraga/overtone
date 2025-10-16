@@ -67,6 +67,7 @@ const DEFAULT_ARRANGEMENTS_DIRECTORY_PATH: &str = "arrangements";
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectManifest {
     pub info: ProjectInfo,
+    #[serde(default)]
     pub path_overrides: ProjectPathOverrides,
     pub plugins: Vec<PluginDependencyEntry>,
 }
@@ -77,7 +78,7 @@ pub struct ProjectInfo {
     pub authors: Option<Vec<String>>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct ProjectPathOverrides {
     arrangements_dir: Option<PathBuf>,
     default_export_dir: Option<PathBuf>,
