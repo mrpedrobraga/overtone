@@ -1,0 +1,206 @@
+{
+  "main": {
+    "id": "e68235d5b70a592c",
+    "type": "split",
+    "children": [
+      {
+        "id": "9a39855d01a8ed56",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "6a47f26a90406020",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Idea Dump.md",
+                "mode": "source",
+                "source": true
+              },
+              "icon": "lucide-file",
+              "title": "Idea Dump"
+            },
+            "group": "53804608ebd66038"
+          }
+        ]
+      },
+      {
+        "id": "e8a264f1e0771f97",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "05a6872cfd9cd40a",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "Idea Dump.md",
+                "mode": "preview",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "Idea Dump"
+            },
+            "group": "53804608ebd66038"
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "c7bf7040d828c3e4",
+    "type": "split",
+    "children": [
+      {
+        "id": "d1adbb319827f6bb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fd55b97bd98aaf53",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "28422083522370ab",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "70e5da03baf17387",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "right": {
+    "id": "52abcc55ccf977ab",
+    "type": "split",
+    "children": [
+      {
+        "id": "f30ff0225a7c0ce0",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a54b63f7d1617e65",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "Concepts/The Render Graph.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for The Render Graph"
+            }
+          },
+          {
+            "id": "2cfc778a16771a94",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "Concepts/The Render Graph.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from The Render Graph"
+            }
+          },
+          {
+            "id": "488a4236434880dd",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "223ffaf0e62c636f",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "Idea Dump.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of Idea Dump"
+            }
+          }
+        ],
+        "currentTab": 3
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "6a47f26a90406020",
+  "lastOpenFiles": [
+    "assets/concept_production_setup.png",
+    "Idea Dump.md",
+    "Overtone.md",
+    "Render Graph Example.png",
+    "assets",
+    "Concepts/The Render Graph.md",
+    "Concepts"
+  ]
+}

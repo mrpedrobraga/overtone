@@ -8,6 +8,7 @@ authors = ["Pedro Braga"]
 overtone = { path = "../.." }
 hound = { version = "3.5.1" }
 serde = { version = "1.0.228" }
+rand = "*"
 
 [dev-dependencies]
 serde_json = "1.0.145"

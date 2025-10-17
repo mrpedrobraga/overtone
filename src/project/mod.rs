@@ -17,11 +17,12 @@
 //! To maintain the invariants of a project intact, a project should be edited through
 //! [`super::editor`].
 
+use std::collections::HashMap;
 use crate::plugin::{PluginDependencyEntry, PluginError};
 pub mod arrangement;
 pub mod resource;
 
-use super::{plugin::LoadedPlugin, DependencyId, Info, OvertoneError};
+use super::{plugin::LoadedPlugin, Info, OvertoneError};
 use crate::project::arrangement::Arrangement;
 use crate::IOError;
 use arrangement::ArrangementError;
@@ -69,7 +70,7 @@ pub struct ProjectManifest {
     pub info: ProjectInfo,
     #[serde(default)]
     pub configuration_overrides: ConfigurationOverrides,
-    pub plugins: Vec<PluginDependencyEntry>,
+    pub plugins: HashMap<String, PluginDependencyEntry>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -82,14 +83,6 @@ pub struct ProjectInfo {
 pub struct ConfigurationOverrides {
     arrangements_dir: Option<PathBuf>,
     default_export_dir: Option<PathBuf>,
-}
-
-/// Simple trait which describes a project dependency.
-/// This trait will fuel power actions within the codebase, such as
-/// renaming, moving, deleting, safely.
-pub trait DependencyEntry {
-    fn get_id(&self) -> DependencyId;
-    fn get_path(&self) -> PathBuf;
 }
 
 impl ProjectManifest {
@@ -197,7 +190,7 @@ impl<'a> Project<'a> {
     }
 
     /// Quick way of retrieving a project's plugins.
-    pub fn get_plugins(&self) -> &Vec<PluginDependencyEntry> {
+    pub fn get_plugins(&self) -> &HashMap<String, PluginDependencyEntry> {
         &self.file.plugins
     }
 
@@ -214,7 +207,7 @@ impl<'a> Project<'a> {
         &'a mut self,
         plugin_id: String,
     ) -> Result<&'a LoadedPlugin<'a>, PluginError> {
-        if self.loaded_plugins.iter().any(|p| p.source.id == plugin_id) {
+        if self.loaded_plugins.iter().any(|p| p.id == plugin_id) {
             return Err(PluginError::PluginAlreadyLoaded());
         }
 
@@ -222,10 +215,10 @@ impl<'a> Project<'a> {
             .file
             .plugins
             .iter()
-            .find(|p| p.id == plugin_id)
+            .find(|p| p.0.as_str().eq(&plugin_id))
             .ok_or_else(|| PluginError::MissingPlugin(plugin_id.clone()))?;
 
-        let loaded = LoadedPlugin::load_from_dependency_entry(&self.directory, entry)?;
+        let loaded = LoadedPlugin::load_from_dependency_entry(&self.directory, entry.0, entry.1)?;
 
         self.loaded_plugins.push(loaded);
         Ok(self.loaded_plugins.last().unwrap())

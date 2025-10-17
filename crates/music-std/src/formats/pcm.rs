@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use overtone::renderer::RenderResult;
+use {core::f32, overtone::renderer::RenderResult};
 
 pub const PCM_RENDER_FORMAT_ID: &str = "audio-pcm";
 
@@ -24,15 +24,23 @@ impl RenderResult for AudioPcm {
 
 impl AudioPcm {
     pub fn example() -> Self {
-        let sample_rate =  44100;
-        let mut content = Vec::new();
+        let sample_rate = 41000;
+        let mut content = Vec::with_capacity(sample_rate);
 
-        for t in (0..sample_rate).map(|x| x as f32 / sample_rate as f32) {
-            let sample = (t * (440.0 - t * 220.0) * 2.0 * std::f32::consts::PI).sin();
-            let amplitude = i16::MAX as f32;
-            content.push((sample * amplitude) as i16);
+        for i in 0..sample_rate {
+            let t = i as f32 / sample_rate as f32;
+            let frequency = 440.0 * f32::consts::TAU;
+            let amplitude = (1.0f32 - 0.985f32).powf(t);
+            let sample = (t * frequency).sin();
+            let sample = sample.signum();
+            let sample = sample * amplitude;
+            let sample16: i16 = (sample * (i16::MAX as f32)) as i16;
+            content.push(sample16);
         }
 
-        Self { sample_rate, content }
+        Self {
+            sample_rate,
+            content,
+        }
     }
 }

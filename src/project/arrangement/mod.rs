@@ -32,8 +32,8 @@ use std::fs;
 use std::string::FromUtf8Error;
 use crate::{DependencyId, OvertoneError};
 use crate::project::resource::{Resource, ResourceFieldInfo, ResourceFieldValue, ResourceGetFieldError, ResourceSetFieldError};
-use crate::project::DependencyEntry;
 
+pub mod fragments;
 pub mod time;
 
 const ARRANGEMENT_HEADER_FILE_NAME: &str = "header.toml";
@@ -66,24 +66,6 @@ pub struct ArrangementContent {
 /// TODO: Maybe formalise a "dependency system" for these things.
 pub struct ArrFragmentReference {
     pub id: DependencyId,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-/// The dependency entry for an arrangement fragment.
-/// This gets saved in the project.
-pub struct ArrFragmentDependencyEntry {
-    pub id: DependencyId,
-    pub path: PathBuf,
-}
-
-impl DependencyEntry for ArrFragmentDependencyEntry {
-    fn get_id(&self) -> DependencyId {
-        self.id.clone()
-    }
-
-    fn get_path(&self) -> PathBuf {
-        self.path.clone()
-    }
 }
 
 impl Arrangement {

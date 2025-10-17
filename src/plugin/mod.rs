@@ -14,27 +14,16 @@ use std::fmt::Debug;
 use std::path::PathBuf;
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
-use crate::{DependencyId, OvertoneError};
-use crate::project::DependencyEntry;
+use crate::{OvertoneError};
 use crate::renderer::RenderExporter;
 use crate::renderer::Renderer;
-
-/// Unique identifier of a loaded plugin.
-pub type PluginId = i32;
 
 #[allow(dead_code)]
 /// An Overtone plugin, which will be loaded, registered,
 /// and can contribute with Renderers, Track Fragments and more.
 pub trait Plugin {
-    /// Returns the 'id' of the plugin, which will identify it from other plugins
-    /// To avoid 'id' collision, try to be unique.
-    /// Note that as the plugin is loaded, it'll be identified by it's uid instead.
-    fn get_id(&self) -> &'static str;
-
-    /// Returns the name of the plugin, which will be displayed when errors occur.
-    fn get_name(&self) -> &'static str {
-        "Unnamed Plugin"
-    }
+    ///Returns some metadata for the plugin.
+    fn get_metadata(&self) -> &PluginMetadata;
 
     /// Signal executed when the plugin loads.
     fn on_plugin_load(&mut self, _project: &Project) {}
@@ -43,21 +32,29 @@ pub trait Plugin {
     fn get_contributions(&self) -> PluginContributions;
 }
 
+/// Light metadata for a plugin.
+#[derive(Serialize, Deserialize, Debug)]
+pub struct PluginMetadata {
+    /// The unique identifier of this plugin, which will
+    /// distinguish it from other plugins.
+    ///
+    /// To avoid identifier collisions, choose a unique name.
+    ///
+    /// Note that for some cases, a plugin will be loaded and identified
+    /// by its unique id.
+    pub id: String,
+    /// Name of the plugin.
+    pub name: String,
+    /// Description of what the plugin does.
+    pub description: Option<String>,
+    /// Authors of the plugin.
+    pub authors: Vec<String>
+}
+
 #[derive(Serialize, Deserialize, Debug)]
 /// Trait that describes a plugin from the perspective of a project.
 pub struct PluginDependencyEntry {
-    pub id: DependencyId,
     pub path: PathBuf,
-}
-
-impl DependencyEntry for PluginDependencyEntry {
-    fn get_id(&self) -> DependencyId {
-        self.id.clone()
-    }
-
-    fn get_path(&self) -> PathBuf {
-        self.path.clone()
-    }
 }
 
 /// Struct that holds all the contributions from a plugin.
@@ -66,10 +63,18 @@ pub struct PluginContributions {
     pub exporters: Option<HashMap<String, Box<dyn RenderExporter>>>,
 }
 
+pub enum PluginContribution {
+    Renderer(Box<dyn Renderer>),
+    Exporter(Box<dyn RenderExporter>),
+    Other {
+        namespace: String,
+    }
+}
+
 /// Type that holds a plugin loaded from a foreign library, metadata,
 /// and the loaded library itself.
 pub struct LoadedPlugin<'a> {
-    pub uid: PluginId,
+    pub id: String,
     pub plugin: Box<dyn Plugin>,
     pub source: &'a PluginDependencyEntry,
 
@@ -79,11 +84,6 @@ pub struct LoadedPlugin<'a> {
 }
 
 impl<'a> LoadedPlugin<'a> {
-    /// Returns the plugin's unique identifier.
-    pub fn get_uid(&self) -> &PluginId {
-        &self.uid
-    }
-
     /// Returns a reference to the [`Plugin`] itself.
     pub fn get_plugin(&self) -> &dyn Plugin {
         self.plugin.as_ref()
@@ -98,6 +98,7 @@ impl<'a> LoadedPlugin<'a> {
     /// might contain an absolute or relative path.
     pub fn load_from_dependency_entry(
         base_path: &Option<PathBuf>,
+        id: &str,
         source: &'a PluginDependencyEntry,
     ) -> Result<LoadedPlugin<'a>, PluginError> {
         pub type PluginProvider = unsafe fn() -> Box<dyn Plugin>;
@@ -119,7 +120,7 @@ impl<'a> LoadedPlugin<'a> {
         }
 
         Ok(LoadedPlugin {
-            uid: 0,
+            id: id.to_string(),
             lib,
             source,
             plugin,
@@ -129,7 +130,7 @@ impl<'a> LoadedPlugin<'a> {
 
 impl<'a> Debug for LoadedPlugin<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str(format!("[Plugin '{}']", self.plugin.get_name()).as_str())
+        f.write_str(format!("[Plugin '{}']", self.plugin.get_metadata().name).as_str())
     }
 }
 

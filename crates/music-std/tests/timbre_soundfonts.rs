@@ -1,6 +1,6 @@
-use std::io::Write;
 use overtone_music_std::formats::pcm::AudioPcm;
 use overtone_music_std::formats::timbre::*;
+use std::io::Write;
 
 #[test]
 fn store() {
@@ -18,7 +18,7 @@ fn store() {
                 description: Some("Just a good ol' sine wave.".to_string()),
                 categories: vec!["synth".to_string(), "chiptune".to_string()],
             },
-            fragments: vec![AudioFragment::RawPCM(AudioPcm::example())],
+            fragments: vec![AudioFragment::RawPCM(AudioPcm::plucked_string())],
             sampling_strategy: InstrumentSamplingStrategy::EuclideanVoronoi(
                 EuclideanVoronoiSamplingStrategy {
                     dimensionality: 1,

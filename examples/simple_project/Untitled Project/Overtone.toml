@@ -1,11 +1,10 @@
 [info]
 name = "Untitled Project"
 license = "MIT"
-authors = ["Pedro Braga"]
+authors = ["Pedro Braga <mrpedrobraga.com>"]
 
 [editor]
 requires_version = "0.0.1"
 
-[[plugins]]
-id = "music-std"
-path = "../../../target/release/libovertone_music_std.so"
+[plugins]
+music-std = { path = "../../../target/release/libovertone_music_std.so" }

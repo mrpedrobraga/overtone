@@ -29,6 +29,7 @@ pub mod editor;
 pub mod plugin;
 pub mod project;
 pub mod renderer;
+pub mod transformer;
 
 /// Trait that allows extracting some metadata from foreign types.
 pub trait Info {

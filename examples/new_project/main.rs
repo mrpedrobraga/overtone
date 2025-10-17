@@ -1,6 +1,7 @@
 use overtone::plugin::PluginDependencyEntry;
 use overtone::project::{Project, ProjectInfo, ProjectManifest};
 use std::path::PathBuf;
+use maplit::hashmap;
 
 fn main() {
     let project = Project::new(ProjectManifest {
@@ -9,11 +10,13 @@ fn main() {
             authors: vec!["Pedro Braga <mrpedrobraga.com>".to_owned()],
         },
         configuration_overrides: Default::default(),
-        plugins: vec![PluginDependencyEntry {
-            id: "music-std".to_string(),
-            path: PathBuf::from("../../../target/release/libovertone_music_std.so"),
-        }],
+        plugins: hashmap! {
+                "music-std".to_string() => PluginDependencyEntry {
+                path: PathBuf::from("../../../target/release/libovertone_music_std.so"),
+            }
+        },
     });
 
     project.save_to_new_directory("./examples/new_project/").unwrap();
 }
+

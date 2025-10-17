@@ -1,3 +1,4 @@
+use crate::formats::pcm::{AudioPcm, PCM_RENDER_FORMAT_ID};
 use {
     overtone::{
         project::arrangement::Arrangement,
@@ -5,7 +6,6 @@ use {
     },
     std::collections::HashMap,
 };
-use crate::formats::pcm::{AudioPcm, PCM_RENDER_FORMAT_ID};
 
 pub fn get() -> HashMap<String, Box<dyn Renderer>> {
     let mut map: HashMap<String, Box<dyn Renderer>> = HashMap::new();

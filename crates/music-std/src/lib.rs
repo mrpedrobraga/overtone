@@ -2,6 +2,7 @@ use overtone::{
     overtone_plugin,
     plugin::{Plugin, PluginContributions},
 };
+use overtone::plugin::PluginMetadata;
 
 pub mod exporters;
 pub mod formats;
@@ -15,9 +16,18 @@ impl MusicStd {
     }
 }
 
+static MUSIC_STD_METADATA: std::sync::OnceLock<PluginMetadata> = std::sync::OnceLock::new();
+
 impl Plugin for MusicStd {
-    fn get_id(&self) -> &'static str {
-        "music-std"
+    fn get_metadata(&self) -> &PluginMetadata {
+        &MUSIC_STD_METADATA.get_or_init(|| {
+            PluginMetadata {
+                id: "music-std".to_string(),
+                name: "Music Standard Library".to_string(),
+                description: Some("Default library containing lots of audio and musical functionality.".to_string()),
+                authors: vec!["Overtone".to_string()],
+            }
+        })
     }
 
     fn get_contributions(&self) -> PluginContributions {
