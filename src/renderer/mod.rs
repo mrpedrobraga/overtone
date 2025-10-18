@@ -75,7 +75,7 @@ pub trait RenderExporter {
     fn is_render_format_supported(&self, format_id: String) -> bool;
 
     /// Exports a render result to a location.
-    fn export(&self, what: &dyn RenderResult) -> Result<(), ExportError>;
+    fn export(&self) -> Result<(), ExportError>;
 }
 
 #[derive(Debug)]
@@ -88,4 +88,10 @@ pub enum ExportError {
     IOError(std::io::Error),
     /// No location chosen
     NoTargetLocationChosen,
+    /// Too lazy to implement a proper error right now during this
+    /// stage of iterative development. You know how it is.
+    ///
+    /// This WILL be deleted later.
+    #[deprecated]
+    Generic
 }

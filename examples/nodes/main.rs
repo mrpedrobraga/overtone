@@ -1,3 +1,4 @@
+use std::sync::{Arc, RwLock};
 use {
     overtone::{
         renderer::{ExportError, RenderExporter, RenderResult, RenderResultExt},
@@ -5,15 +6,26 @@ use {
     },
     std::path::{Path, PathBuf},
 };
+use overtone::transformer::ProductionSetup;
 
 fn main() {
+    let mut production = ProductionSetup::new();
+
     let n0 = WaveGenerator::new(440.0);
+    let n0: Arc<RwLock<dyn Node>> = Arc::new(RwLock::new(n0));
+
     let n1 = Gain::new(1.0);
+    let n1: Arc<RwLock<dyn Node>> = Arc::new(RwLock::new(n1));
+
     let n2 = WAVExporter::new("./examples/nodes/tune.wav");
+    let n2: Arc<RwLock<dyn Node>> = Arc::new(RwLock::new(n2));
 
-    let sample = AudioPcm::example();
+    let _ = production.try_connect(&n0, 0, &n1, 0);
+    let _ = production.try_connect(&n1, 0, &n2, 0);
 
-    let sample = n2.export(&sample);
+    {
+        production.export(n2).unwrap()
+    }
 }
 
 struct WaveGenerator {
@@ -24,15 +36,7 @@ impl WaveGenerator {
         WaveGenerator { frequency }
     }
 }
-impl Node for WaveGenerator {
-    fn request_connect(
-        &mut self,
-        my_out_socket: SocketIdx,
-        its_in_socket: SocketIdx,
-    ) -> Result<(), SocketConnectionError> {
-        todo!()
-    }
-}
+impl Node for WaveGenerator {}
 
 /// A struct containing PCM audio.
 /// Ideally, this would be a `RealTimeStream` so that it can be
@@ -82,15 +86,7 @@ impl Gain {
     }
 }
 
-impl Node for Gain {
-    fn request_connect(
-        &mut self,
-        my_out_socket: SocketIdx,
-        its_in_socket: SocketIdx,
-    ) -> Result<(), SocketConnectionError> {
-        todo!()
-    }
-}
+impl Node for Gain {}
 
 struct WAVExporter {
     file: PathBuf,
@@ -105,12 +101,8 @@ impl WAVExporter {
     }
 }
 impl Node for WAVExporter {
-    fn request_connect(
-        &mut self,
-        my_out_socket: SocketIdx,
-        its_in_socket: SocketIdx,
-    ) -> Result<(), SocketConnectionError> {
-        todo!()
+    fn as_exporter(&self) -> Option<&dyn RenderExporter> {
+        Some(self)
     }
 }
 impl RenderExporter for WAVExporter {
@@ -118,11 +110,9 @@ impl RenderExporter for WAVExporter {
         format_id == "audio/pcm"
     }
 
-    fn export(&self, what: &dyn RenderResult) -> Result<(), ExportError> {
+    fn export(&self) -> Result<(), ExportError> {
         let location = &self.file;
-        let audio_pcm = what
-            .as_::<AudioPcm>()
-            .ok_or(ExportError::IncorrectRenderFormat)?;
+        let audio_pcm = AudioPcm::example();
         let spec = hound::WavSpec {
             channels: 1,
             sample_rate: audio_pcm.sample_rate as u32,
