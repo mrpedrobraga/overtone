@@ -33,6 +33,11 @@ impl<Fut> Task for FutureTask<Fut> where Fut: Future {
     type Output = Fut::Output;
 
     fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-        self.0.poll(cx)
+        let future = unsafe{ Pin::map_unchecked_mut(self, |a| &mut a.0) };
+
+        match future.poll(cx) {
+            std::task::Poll::Ready(value) => {Poll::Ready(value)},
+            std::task::Poll::Pending => {Poll::Pending}
+        }
     }
 }
