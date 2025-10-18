@@ -9,14 +9,15 @@
 //! that can offer specific kinds of functionalities.
 
 use super::project::Project;
-use libloading::Library;
-use std::fmt::Debug;
-use std::path::PathBuf;
-use serde_derive::{Deserialize, Serialize};
-use std::collections::HashMap;
-use crate::{OvertoneError};
 use crate::renderer::RenderExporter;
 use crate::renderer::Renderer;
+use crate::transformer::Node;
+use crate::OvertoneError;
+use libloading::Library;
+use serde_derive::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::path::PathBuf;
 
 #[allow(dead_code)]
 /// An Overtone plugin, which will be loaded, registered,
@@ -48,7 +49,7 @@ pub struct PluginMetadata {
     /// Description of what the plugin does.
     pub description: Option<String>,
     /// Authors of the plugin.
-    pub authors: Vec<String>
+    pub authors: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -61,14 +62,35 @@ pub struct PluginDependencyEntry {
 pub struct PluginContributions {
     pub renderers: Option<HashMap<String, Box<dyn Renderer>>>,
     pub exporters: Option<HashMap<String, Box<dyn RenderExporter>>>,
+    pub contributions: Vec<PluginContribution>,
 }
 
+/// Something that a plugin contributes with to you.
+///
+/// A plugin can contribute with several of these.
 pub enum PluginContribution {
+    #[deprecated]
     Renderer(Box<dyn Renderer>),
+    /// A 'Node' that can be used in a Production Setup.
+    Node(Box<dyn Node>),
+    /// An Exporter, which can be used to export productions
+    /// of arrangements.
     Exporter(Box<dyn RenderExporter>),
+    /// A new 'kind' of contribution that this plugin
+    /// or other plugins can contribute with.
+    ContributionKind(String),
+    /// Some other contribution that's not officially recognised
+    /// by Overtone. Use this if you plugin offers a contribution
+    /// for another third-party plugin.
     Other {
-        namespace: String,
-    }
+        /// What is the kind of this contribution
+        /// as understood by that plugin?
+        ///
+        /// Notice that some other plugin must've contributed
+        /// with a `ContributionKind` containing this kind
+        /// for this contribution to ever be useful.
+        kind: String,
+    },
 }
 
 /// Type that holds a plugin loaded from a foreign library, metadata,
@@ -144,8 +166,10 @@ impl<'a> Debug for LoadedPlugin<'a> {
 macro_rules! overtone_plugin {
     ( $e: expr ) => {
         #[no_mangle]
-        pub fn get_overtone_plugin() -> Box<dyn $crate::plugin::Plugin> { $e }
-    }
+        pub fn get_overtone_plugin() -> Box<dyn $crate::plugin::Plugin> {
+            $e
+        }
+    };
 }
 
 //MARK: Errors

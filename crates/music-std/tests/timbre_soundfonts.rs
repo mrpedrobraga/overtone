@@ -18,7 +18,7 @@ fn store() {
                 description: Some("Just a good ol' sine wave.".to_string()),
                 categories: vec!["synth".to_string(), "chiptune".to_string()],
             },
-            fragments: vec![AudioFragment::RawPCM(AudioPcm::plucked_string())],
+            fragments: vec![AudioFragment::RawPCM(AudioPcm::example())],
             sampling_strategy: InstrumentSamplingStrategy::EuclideanVoronoi(
                 EuclideanVoronoiSamplingStrategy {
                     dimensionality: 1,

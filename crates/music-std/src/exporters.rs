@@ -1,15 +1,15 @@
+use crate::formats::pcm::{AudioPcm, PCM_RENDER_FORMAT_ID};
 use {
     overtone::renderer::{ExportError, RenderExporter, RenderResult, RenderResultExt as _},
-    std::collections::HashMap,
+    std::{collections::HashMap, path::PathBuf},
 };
-use crate::formats::pcm::{AudioPcm, PCM_RENDER_FORMAT_ID};
 
 pub fn get() -> HashMap<String, Box<dyn RenderExporter>> {
     let mut map: HashMap<String, Box<dyn RenderExporter>> = HashMap::new();
 
     map.insert(
         "pcm-wav-exporter".to_string(),
-        Box::new(PCMWavExporter {}) as Box<dyn RenderExporter>,
+        Box::new(PCMWavExporter::default()) as Box<dyn RenderExporter>,
     );
 
     map
@@ -17,18 +17,20 @@ pub fn get() -> HashMap<String, Box<dyn RenderExporter>> {
 
 /// Renderer that emits audio from an arrangement.
 #[derive(Default)]
-pub struct PCMWavExporter {}
+pub struct PCMWavExporter {
+    location: Option<PathBuf>,
+}
 
 impl RenderExporter for PCMWavExporter {
     fn is_render_format_supported(&self, format_id: String) -> bool {
         format_id == PCM_RENDER_FORMAT_ID
     }
 
-    fn export(
-        &self,
-        what: &dyn RenderResult,
-        location: std::path::PathBuf,
-    ) -> Result<(), ExportError> {
+    fn export(&self, what: &dyn RenderResult) -> Result<(), ExportError> {
+        let location = self
+            .location
+            .as_ref()
+            .ok_or(ExportError::NoTargetLocationChosen)?;
         let audio_pcm = what
             .as_::<AudioPcm>()
             .ok_or(ExportError::IncorrectRenderFormat)?;

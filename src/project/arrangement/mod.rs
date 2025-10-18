@@ -3,17 +3,17 @@
 //! The soul of an Overtone project is the arrangements.
 //!
 //! Arrangements combine [`Fragment`]s together to create things (i.e. songs, video).
-//! Fragments themselves might be internally composed of sub-fragments in a graph-like fashion.
+//! Fragments themselves might be internally composed of sub-elements in a graph-like fashion.
 //!
 //! > This is a bit of an esoteric way of putting things, but the generality of this concept
 //! > is why Overtone is so powerful.
 //! >
 //! > As an example, a Fragment of a song can be something like a single audio sample or a Piano Roll
 //! > as it shows in the track editor. Internally, the individual notes of a piano roll are considered
-//! > its fragments, etc.
+//! > its elements, etc.
 //!
 //! An arrangement contains a single fragment, which seems to imply you can only have One Thing
-//! in your song, but you can choose it to be a kind of fragment that itself can house many fragments
+//! in your song, but you can choose it to be a kind of fragment that itself can house many elements
 //! like a Piano Roll, a Multi Type Fragment, etc.;
 //!
 //! ## Lazy Loading
@@ -33,7 +33,7 @@ use std::string::FromUtf8Error;
 use crate::{DependencyId, OvertoneError};
 use crate::project::resource::{Resource, ResourceFieldInfo, ResourceFieldValue, ResourceGetFieldError, ResourceSetFieldError};
 
-pub mod fragments;
+pub mod elements;
 pub mod time;
 
 const ARRANGEMENT_HEADER_FILE_NAME: &str = "header.toml";

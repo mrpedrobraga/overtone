@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use {core::f32, overtone::renderer::RenderResult};
 
-pub const PCM_RENDER_FORMAT_ID: &str = "audio-pcm";
+pub const PCM_RENDER_FORMAT_ID: &str = "audio/pcm";
 
 /// A struct containing PCM audio.
 /// Ideally, this would be a `RealTimeStream` so that it can be

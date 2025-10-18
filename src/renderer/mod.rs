@@ -21,8 +21,9 @@ use crate::project::arrangement::Arrangement;
 use std::path::PathBuf;
 
 /// Trait for anything that can render an arrangement to a [`RenderResult`].
+#[deprecated]
 pub trait Renderer {
-    /// Renders the given fragments using resources from the [`Arrangement`].
+    /// Renders the given elements using resources from the [`Arrangement`].
     ///
     /// TODO: Make this method an asynchronously running task that can be probed and cancelled.
     fn render(&self, arrangement: &Arrangement /* fragment slice */) -> Box<dyn RenderResult>;
@@ -74,7 +75,7 @@ pub trait RenderExporter {
     fn is_render_format_supported(&self, format_id: String) -> bool;
 
     /// Exports a render result to a location.
-    fn export(&self, what: &dyn RenderResult, location: PathBuf) -> Result<(), ExportError>;
+    fn export(&self, what: &dyn RenderResult) -> Result<(), ExportError>;
 }
 
 #[derive(Debug)]
@@ -85,4 +86,6 @@ pub enum ExportError {
     IncorrectRenderFormat,
     /// Error saving the file to disk.
     IOError(std::io::Error),
+    /// No location chosen
+    NoTargetLocationChosen,
 }
