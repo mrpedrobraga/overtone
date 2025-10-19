@@ -18,11 +18,13 @@ macro_rules! connect {
 }
 
 fn main() {
-    let n0 = WaveGeneratorNode::new(440.0);
+    let base = 261.63;
+
+    let n0 = WaveGeneratorNode::new(base);
     let n0 = package(n0);
-    let n1 = WaveGeneratorNode::new(440.0 * 5.0/4.0);
+    let n1 = WaveGeneratorNode::new(base * 5.0/4.0);
     let n1 = package(n1);
-    let n2 = WaveGeneratorNode::new(440.0 * 3.0/2.0);
+    let n2 = WaveGeneratorNode::new(base * 3.0/2.0);
     let n2 = package(n2);
 
     let c1 = CombineNode::new();
