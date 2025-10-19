@@ -62,6 +62,8 @@ impl Sink for WAVExporter {
             sample_format: hound::SampleFormat::Int,
         };
 
+        let location = location.join(format!("export-{}.wav", chrono::Utc::now().to_string()));
+
         let mut writer = hound::WavWriter::create(location, spec).expect("Failed to write.");
 
         for sample in audio_pcm.content.iter().copied() {

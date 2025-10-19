@@ -43,6 +43,7 @@ impl Node for WaveGenerator {
         let audio_source = InnerSource {
             frequency: self.frequency,
         };
+        self.frequency *= 2.0;
         let audio_source: Box<dyn Source<Item = AudioPcm>> = Box::new(audio_source);
         Ok(Box::new(audio_source))
     }
