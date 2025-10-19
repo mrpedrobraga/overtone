@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use overtone::project::arrangement::Arrangement;
 use overtone::{project::Project, OvertoneError};
 
@@ -29,13 +27,6 @@ fn main() -> Result<(), OvertoneError> {
     let song = Arrangement::load_from_directory(
         "./examples/simple_project/Untitled Project/arrangements/Untitled Song".into(),
     )?;
-
-    let render_result = renderer.render(&song);
-
-    let _ = dbg!(exporter.export(
-        &*render_result,
-        PathBuf::from("./examples/simple_project/Untitled Project/exports/tone.wav")
-    ));
 
     Ok(())
 }
