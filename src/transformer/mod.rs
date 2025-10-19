@@ -15,7 +15,7 @@ pub type NodeWeakRef = Weak<RwLock<dyn Node>>;
 
 /// The main struct of this module.
 ///
-/// This is a graph that contains interconnected nodes.
+/// This is a graph that contains interconnected production_graph.
 pub struct ProductionSetup {
     nodes: Vec<NodeRef>
 }
