@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/overtone-test-editor/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/music-std/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/otherhosts/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/lilv/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

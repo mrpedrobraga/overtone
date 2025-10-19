@@ -28,8 +28,8 @@ pub trait Node {
     fn connect(&mut self, to_socket: SocketIdx, from_node: NodeRef, from_socket: SocketIdx) -> Result<(), SocketConnectionError>;
     /// Disconnects whatever is connected to the socket at the given index.
     fn disconnect(&mut self, socket: SocketIdx);
-    /// Gets a mysterious source hidden behind an Any;
-    fn as_source(&mut self, from_socket: SocketIdx) -> Result<Box<dyn Any>, SocketConnectionError>;
+    /// Attempts to thread a source, pulling it from one of the output sockets;
+    fn as_source(&mut self, from_out_socket: SocketIdx) -> Result<Box<dyn Any>, SocketConnectionError>;
     /// Casts this node to a [`Sink`], if possible.
     fn as_sink(&mut self) -> Option<&mut dyn Sink> {
         None

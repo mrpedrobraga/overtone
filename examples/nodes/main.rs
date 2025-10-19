@@ -1,6 +1,4 @@
-use overtone::transformer::{
-    ExportError, NodeRef, Sink, SocketConnectionError, SocketIdx, Source, Value,
-};
+use overtone::transformer::{ExportError, NodeRef, Sink, SocketConnectionError, SocketIdx, SocketRef, Source, Value};
 use std::any::Any;
 use std::sync::{Arc, RwLock};
 use {
@@ -8,9 +6,13 @@ use {
     std::path::{Path, PathBuf},
 };
 
+use audio::AudioPcm;
+mod audio;
+
 fn new_node<N: Node + 'static>(node: N) -> NodeRef {
     Arc::new(RwLock::new(node))
 }
+
 macro_rules! connect {
     ($a:expr, $a_out:expr, $b_in:expr, $b:expr) => {{
         $b.write().unwrap().connect($b_in, $a, $a_out).unwrap()
@@ -20,9 +22,9 @@ macro_rules! connect {
 fn main() {
     let base = 261.63;
 
-    let n0 = new_node(WaveGeneratorNode::new(base));
-    let n1 = new_node(WaveGeneratorNode::new(base * 5.0 / 4.0));
-    let n2 = new_node(WaveGeneratorNode::new(base * 3.0 / 2.0));
+    let n0 = new_node(WaveGenerator::new(base));
+    let n1 = new_node(WaveGenerator::new(base * 5.0 / 4.0));
+    let n2 = new_node(WaveGenerator::new(base * 3.0 / 2.0));
 
     let c1 = new_node(CombineNode::new());
     let c2 = new_node(CombineNode::new());
@@ -41,19 +43,26 @@ fn main() {
     }
 
     {
-        nz.write().unwrap().as_sink().unwrap().drain();
+        nz.write()
+            .unwrap()
+            .as_sink()
+            .expect("Node could not be converted to a Sink.")
+            .drain()
+            .expect("Couldn't drain the sink.");
     }
 }
 
-struct WaveGeneratorNode {
+// -- WAVE GENERATOR --
+
+struct WaveGenerator {
     frequency: f32,
 }
-impl WaveGeneratorNode {
+impl WaveGenerator {
     pub fn new(frequency: f32) -> Self {
-        WaveGeneratorNode { frequency }
+        WaveGenerator { frequency }
     }
 }
-impl Node for WaveGeneratorNode {
+impl Node for WaveGenerator {
     fn connect(
         &mut self,
         to_socket: SocketIdx,
@@ -64,14 +73,24 @@ impl Node for WaveGeneratorNode {
     }
 
     fn disconnect(&mut self, socket: SocketIdx) {
-        // There are no sockets, but there's no reason to emit an error or anything.
+        // There are no input sockets to disconnect, but there's no reason to emit an error or anything.
     }
 
-    fn as_source(&mut self, from_socket: SocketIdx) -> Result<Box<dyn Any>, SocketConnectionError> {
-        if from_socket != 0 {
+    fn as_source(&mut self, from_out_socket: SocketIdx) -> Result<Box<dyn Any>, SocketConnectionError> {
+        if from_out_socket != 0 {
             return Err(SocketConnectionError::NoSuchSocket);
         }
-        let audio_source = WaveGenerator {
+        pub struct InnerSource {
+            frequency: f32,
+        }
+        impl Source for InnerSource {
+            type Item = AudioPcm;
+
+            fn pull(&mut self) -> Self::Item {
+                AudioPcm::example(self.frequency)
+            }
+        }
+        let audio_source = InnerSource {
             frequency: self.frequency,
         };
         let audio_source: Box<dyn Source<Item = AudioPcm>> = Box::new(audio_source);
@@ -79,57 +98,9 @@ impl Node for WaveGeneratorNode {
     }
 }
 
-pub struct WaveGenerator {
-    frequency: f32,
-}
-impl Source for WaveGenerator {
-    type Item = AudioPcm;
-
-    fn pull(&mut self) -> Self::Item {
-        AudioPcm::example(self.frequency)
-    }
-}
-
-/// A struct containing PCM audio.
-/// Ideally, this would be a `RealTimeStream` so that it can be
-/// previewed or exported in real time and concurrently.
-pub struct AudioPcm {
-    pub sample_rate: usize,
-    pub content: Vec<f32>,
-}
-impl Value for AudioPcm {
-    fn get_format_name(&self) -> String {
-        "audio/pcm".to_string()
-    }
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-}
-impl AudioPcm {
-    pub fn example(frequency: f32) -> Self {
-        let sample_rate = 41000;
-        let mut content = Vec::with_capacity(sample_rate);
-
-        for i in 0..sample_rate {
-            let t = i as f32 / sample_rate as f32;
-            let frequency = frequency * std::f32::consts::TAU;
-            let amplitude = (1.0f32 - 0.985f32).powf(t);
-            let sample = (t * frequency).sin();
-            let sample = sample.signum();
-            let sample = sample * amplitude;
-            content.push(sample);
-        }
-
-        Self {
-            sample_rate,
-            content,
-        }
-    }
-}
-
 struct GainNode {
     gain: f32,
-    source: Option<Box<dyn Source<Item = AudioPcm>>>,
+    source: Option<SocketRef>,
 }
 impl GainNode {
     pub fn new(gain: f32) -> Self {
@@ -147,9 +118,7 @@ impl Node for GainNode {
         if !(to_socket == 0 || to_socket == 1) {
             return Err(SocketConnectionError::NoSuchSocket);
         }
-
-        let mut from_node = from_node.write().unwrap();
-        self.source = Some(from_node.try_get_source(from_socket).unwrap());
+        self.source = Some(SocketRef(from_node, from_socket));
         Ok(())
     }
 
@@ -158,15 +127,15 @@ impl Node for GainNode {
     }
 
     fn as_source(&mut self, from_socket: SocketIdx) -> Result<Box<dyn Any>, SocketConnectionError> {
-        if !from_socket == 0 {
+        if from_socket != 0 {
             return Err(SocketConnectionError::NoSuchSocket);
         }
 
-        struct Gain {
+        struct InnerSource {
             gain: f32,
             source: Box<dyn Source<Item = AudioPcm>>,
         }
-        impl Source for Gain {
+        impl Source for InnerSource {
             type Item = AudioPcm;
 
             fn pull(&mut self) -> Self::Item {
@@ -178,9 +147,13 @@ impl Node for GainNode {
             }
         }
 
-        let audio_source = Gain {
+        let &SocketRef (ref node_ref, socket_idx) = self.source.as_ref().unwrap();
+        let mut node_ref = node_ref.write().unwrap();
+        let source = node_ref.try_get_source(socket_idx).unwrap();
+
+        let audio_source = InnerSource {
             gain: self.gain,
-            source: self.source.take().unwrap(),
+            source,
         };
         let audio_source: Box<dyn Source<Item = AudioPcm>> = Box::new(audio_source);
         Ok(Box::new(audio_source))
@@ -188,8 +161,8 @@ impl Node for GainNode {
 }
 
 struct CombineNode {
-    source1: Option<Box<dyn Source<Item = AudioPcm>>>,
-    source2: Option<Box<dyn Source<Item = AudioPcm>>>,
+    source1: Option<SocketRef>,
+    source2: Option<SocketRef>,
 }
 impl CombineNode {
     pub fn new() -> Self {
@@ -206,14 +179,13 @@ impl Node for CombineNode {
         from_node: NodeRef,
         from_socket: SocketIdx,
     ) -> Result<(), SocketConnectionError> {
-        let mut from_node = from_node.write().unwrap();
         match to_socket {
             0 => {
-                self.source1 = Some(from_node.try_get_source(from_socket).unwrap());
+                self.source1 = Some(SocketRef(from_node, from_socket));
                 Ok(())
             }
             1 => {
-                self.source2 = Some(from_node.try_get_source(from_socket).unwrap());
+                self.source2 = Some(SocketRef(from_node, from_socket));
                 Ok(())
             }
             _ => Err(SocketConnectionError::NoSuchSocket),
@@ -229,15 +201,15 @@ impl Node for CombineNode {
     }
 
     fn as_source(&mut self, from_socket: SocketIdx) -> Result<Box<dyn Any>, SocketConnectionError> {
-        if !from_socket == 0 {
+        if from_socket != 0 {
             return Err(SocketConnectionError::NoSuchSocket);
         }
 
-        struct Combine {
+        struct InnerSource {
             source1: Box<dyn Source<Item = AudioPcm>>,
             source2: Box<dyn Source<Item = AudioPcm>>,
         }
-        impl Source for Combine {
+        impl Source for InnerSource {
             type Item = AudioPcm;
 
             fn pull(&mut self) -> Self::Item {
@@ -255,9 +227,17 @@ impl Node for CombineNode {
             }
         }
 
-        let audio_source = Combine {
-            source1: self.source1.take().unwrap(),
-            source2: self.source2.take().unwrap(),
+        let &SocketRef (ref node_ref, socket_idx) = self.source1.as_ref().unwrap();
+        let mut node_ref = node_ref.write().unwrap();
+        let source1 = node_ref.try_get_source(socket_idx).unwrap();
+
+        let &SocketRef (ref node_ref, socket_idx) = self.source2.as_ref().unwrap();
+        let mut node_ref = node_ref.write().unwrap();
+        let source2 = node_ref.try_get_source(socket_idx).unwrap();
+
+        let audio_source = InnerSource {
+            source1,
+            source2,
         };
         let audio_source: Box<dyn Source<Item = AudioPcm>> = Box::new(audio_source);
         Ok(Box::new(audio_source))
@@ -267,7 +247,7 @@ impl Node for CombineNode {
 struct WAVExporter {
     file: PathBuf,
     sample_rate: usize,
-    source: Option<Box<dyn Source<Item = AudioPcm>>>,
+    source: Option<SocketRef>,
 }
 impl WAVExporter {
     pub fn new<P: AsRef<Path>>(path: P) -> Self {
@@ -288,8 +268,7 @@ impl Node for WAVExporter {
         if to_socket != 0 {
             return Err(SocketConnectionError::NoSuchSocket);
         }
-
-        self.source = Some(from_node.write().unwrap().try_get_source(from_socket)?);
+        self.source = Some(SocketRef(from_node, from_socket));
         Ok(())
     }
 
@@ -308,7 +287,12 @@ impl Node for WAVExporter {
 impl Sink for WAVExporter {
     fn drain(&mut self) -> Result<(), ExportError> {
         let location = &self.file;
-        let audio_pcm = self.source.as_mut().unwrap().pull();
+
+        let &SocketRef (ref node_ref, socket_idx) = self.source.as_ref().unwrap();
+        let mut node_ref = node_ref.write().unwrap();
+        let mut source = node_ref.try_get_source(socket_idx).unwrap();
+
+        let audio_pcm: AudioPcm = source.pull();
         let spec = hound::WavSpec {
             channels: 1,
             sample_rate: audio_pcm.sample_rate as u32,
