@@ -1,6 +1,6 @@
 use overtone::transformer::{Node, NodeRef, SocketConnectionError, SocketIdx, SocketRef, Source};
 use std::any::Any;
-use crate::audio::AudioPcm;
+use crate::audio::{AudioChunkPcm, AudioPcm};
 
 pub struct CombineNode {
     source1: Option<SocketRef>,
@@ -50,17 +50,16 @@ impl Node for CombineNode {
         }
 
         struct InnerSource {
-            source1: Box<dyn Source<Item = AudioPcm>>,
-            source2: Box<dyn Source<Item = AudioPcm>>,
+            source1: Box<dyn Source<Item = AudioChunkPcm>>,
+            source2: Box<dyn Source<Item = AudioChunkPcm>>,
         }
         impl Source for InnerSource {
-            type Item = AudioPcm;
+            type Item = AudioChunkPcm;
 
             fn pull(&mut self) -> Self::Item {
                 let frame1 = self.source1.pull();
                 let frame2 = self.source2.pull();
-                AudioPcm {
-                    sample_rate: frame1.sample_rate,
+                AudioChunkPcm {
                     content: frame1
                         .content
                         .iter()
@@ -83,7 +82,7 @@ impl Node for CombineNode {
             source1,
             source2,
         };
-        let audio_source: Box<dyn Source<Item = AudioPcm>> = Box::new(audio_source);
+        let audio_source: Box<dyn Source<Item = AudioChunkPcm>> = Box::new(audio_source);
         Ok(Box::new(audio_source))
     }
 }

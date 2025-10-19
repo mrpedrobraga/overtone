@@ -1,6 +1,6 @@
 use overtone::transformer::{Node, NodeRef, SocketConnectionError, SocketIdx, SocketRef, Source};
 use std::any::Any;
-use crate::audio::AudioPcm;
+use crate::audio::{AudioChunkPcm, AudioPcm};
 
 pub struct GainNode {
     gain: f32,
@@ -38,10 +38,10 @@ impl Node for GainNode {
 
         struct InnerSource {
             gain: f32,
-            source: Box<dyn Source<Item = AudioPcm>>,
+            source: Box<dyn Source<Item = AudioChunkPcm>>,
         }
         impl Source for InnerSource {
-            type Item = AudioPcm;
+            type Item = AudioChunkPcm;
 
             fn pull(&mut self) -> Self::Item {
                 let mut frame = self.source.pull();
@@ -60,7 +60,7 @@ impl Node for GainNode {
             gain: self.gain,
             source,
         };
-        let audio_source: Box<dyn Source<Item = AudioPcm>> = Box::new(audio_source);
+        let audio_source: Box<dyn Source<Item = AudioChunkPcm>> = Box::new(audio_source);
         Ok(Box::new(audio_source))
     }
 }

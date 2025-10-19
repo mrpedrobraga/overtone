@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf};
 use overtone::transformer::{ExportError, Node, NodeRef, Sink, SocketConnectionError, SocketIdx, SocketRef, Source};
 use std::any::Any;
-use crate::audio::AudioPcm;
+use crate::audio::{AudioChunkPcm, AudioPcm};
 
 pub struct WAVExporter {
     file: PathBuf,
@@ -54,10 +54,10 @@ impl Sink for WAVExporter {
         let mut node_ref = node_ref.write().unwrap();
         let mut source = node_ref.try_get_source(socket_idx).unwrap();
 
-        let audio_pcm: AudioPcm = source.pull();
+        let audio_pcm: AudioChunkPcm = source.pull();
         let spec = hound::WavSpec {
             channels: 1,
-            sample_rate: audio_pcm.sample_rate as u32,
+            sample_rate: 41000,
             bits_per_sample: 16,
             sample_format: hound::SampleFormat::Int,
         };

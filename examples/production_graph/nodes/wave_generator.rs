@@ -1,6 +1,6 @@
 use overtone::transformer::{Node, NodeRef, SocketConnectionError, SocketIdx, Source};
 use std::any::Any;
-use crate::audio::AudioPcm;
+use crate::audio::{AudioChunkPcm, AudioPcm};
 
 pub struct WaveGenerator {
     frequency: f32,
@@ -34,17 +34,17 @@ impl Node for WaveGenerator {
             frequency: f32,
         }
         impl Source for InnerSource {
-            type Item = AudioPcm;
+            type Item = AudioChunkPcm;
 
             fn pull(&mut self) -> Self::Item {
-                AudioPcm::example(self.frequency)
+                let whole = AudioPcm::example(self.frequency);
+                AudioChunkPcm { content: whole.content }
             }
         }
         let audio_source = InnerSource {
             frequency: self.frequency,
         };
-        self.frequency *= 2.0;
-        let audio_source: Box<dyn Source<Item = AudioPcm>> = Box::new(audio_source);
+        let audio_source: Box<dyn Source<Item = AudioChunkPcm>> = Box::new(audio_source);
         Ok(Box::new(audio_source))
     }
 }

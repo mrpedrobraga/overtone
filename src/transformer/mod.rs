@@ -41,7 +41,7 @@ impl dyn Node {
     /// that will be stored by a receiver node, allowing it to pull `Item`s.
     pub fn try_get_source<Item: 'static>(&mut self, from_socket: SocketIdx) -> Result<Box<dyn Source<Item = Item>>, SocketConnectionError> {
         let source = self.as_source(from_socket)?;
-        let item = source.downcast::<Box<dyn Source<Item = Item>>>().unwrap();
+        let item = source.downcast::<Box<dyn Source<Item = Item>>>().map_err(|_| SocketConnectionError::IncorrectFormat)?;
         Ok(*item)
     }
 }
@@ -59,9 +59,7 @@ pub enum SocketConnectionError {
     NoSuchSocket,
     /// Connection refused because the format of the incoming signal
     /// is not compatible with this socket.
-    IncorrectFormat {
-        expected: Option<Vec<String>>,
-    },
+    IncorrectFormat,
 }
 
 /// Trait for something that can be passed around by [`Node`]s,

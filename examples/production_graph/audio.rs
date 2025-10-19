@@ -17,6 +17,14 @@ impl Value for AudioPcm {
     }
 }
 
+/// A chunk of PCM audio.
+/// Notice it doesn't contain the amount of channels nor
+/// the sample rate — this is to be determined by the
+/// stream you got this chunk from.
+pub struct AudioChunkPcm {
+    pub content: Vec<f32>
+}
+
 impl AudioPcm {
     pub fn example(frequency: f32) -> Self {
         let sample_rate = 41000;

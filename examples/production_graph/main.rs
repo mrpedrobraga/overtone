@@ -36,28 +36,26 @@ macro_rules! drain {
 fn main() {
     let base = 261.63/2.0;
 
-    let n0 = new_node(WaveGenerator::new(base));
-    let n1 = new_node(WaveGenerator::new(base * 5.0 / 4.0));
-    let n2 = new_node(WaveGenerator::new(base * 3.0 / 2.0));
+    let a = new_node(WaveGenerator::new(base));
+    let b = new_node(WaveGenerator::new(base * 5.0 / 4.0));
+    let c = new_node(WaveGenerator::new(base * 3.0 / 2.0));
 
-    let c1 = new_node(CombineNode::new());
-    let c2 = new_node(CombineNode::new());
+    let ab = new_node(CombineNode::new());
+    let abc = new_node(CombineNode::new());
 
-    let g1 = new_node(GainNode::new(0.25));
+    let master_gain = new_node(GainNode::new(0.25));
 
-    let path = "./examples/production_graph/exports/";
-    let nz = new_node(WAVExporter::new(path));
+    let export_path = "./examples/production_graph/exports/";
+    let wav_exporter = new_node(WAVExporter::new(export_path));
 
-    connect!(n0, 0, 0, c1);
-    connect!(n1, 0, 1, c1);
-    connect!(c1, 0, 0, c2);
-    connect!(n2, 0, 1, c2);
-    connect!(c2, 0, 0, g1);
-    connect!(g1, 0, 0, nz);
+    connect!(a, 0, 0, ab);
+    connect!(b, 0, 1, ab);
+    connect!(ab, 0, 0, abc);
+    connect!(c, 0, 1, abc);
+    connect!(abc, 0, 0, master_gain);
+    connect!(master_gain, 0, 0, wav_exporter);
 
-    drain!(nz);
-    drain!(nz);
-    drain!(nz);
+    drain!(wav_exporter);
 
-    println!("Wrote result to '{}'.", path);
+    println!("Wrote result to '{}'.", export_path);
 }
