@@ -3,6 +3,9 @@ name = "lilv"
 version = "0.1.0"
 edition = "2024"
 
+[dependencies]
+hound = "*"
+
 [build-dependencies]
 cc = "1.2.41"
 pkg-config = "0.3.32"

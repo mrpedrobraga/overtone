@@ -8,35 +8,28 @@ use {
     std::path::{Path, PathBuf},
 };
 
-fn package<N: Node + 'static>(node: N) -> NodeRef {
+fn new_node<N: Node + 'static>(node: N) -> NodeRef {
     Arc::new(RwLock::new(node))
 }
 macro_rules! connect {
-    ($a:expr, $a_out:expr, $b_in:expr, $b:expr) => {
-        {$b.write().unwrap().connect($b_in, $a, $a_out).unwrap()}
-    };
+    ($a:expr, $a_out:expr, $b_in:expr, $b:expr) => {{
+        $b.write().unwrap().connect($b_in, $a, $a_out).unwrap()
+    }};
 }
 
 fn main() {
     let base = 261.63;
 
-    let n0 = WaveGeneratorNode::new(base);
-    let n0 = package(n0);
-    let n1 = WaveGeneratorNode::new(base * 5.0/4.0);
-    let n1 = package(n1);
-    let n2 = WaveGeneratorNode::new(base * 3.0/2.0);
-    let n2 = package(n2);
+    let n0 = new_node(WaveGeneratorNode::new(base));
+    let n1 = new_node(WaveGeneratorNode::new(base * 5.0 / 4.0));
+    let n2 = new_node(WaveGeneratorNode::new(base * 3.0 / 2.0));
 
-    let c1 = CombineNode::new();
-    let mut c1 = package(c1);
-    let c2 = CombineNode::new();
-    let mut c2 = package(c2);
+    let c1 = new_node(CombineNode::new());
+    let c2 = new_node(CombineNode::new());
 
-    let g1 = GainNode::new(0.25);
-    let mut g1 = package(g1);
+    let g1 = new_node(GainNode::new(0.25));
 
-    let nz = WAVExporter::new("./examples/nodes/tune.wav");
-    let mut nz = package(nz);
+    let nz = new_node(WAVExporter::new("./examples/nodes/tune.wav"));
 
     {
         connect!(n0, 0, 0, c1.clone());
@@ -207,7 +200,12 @@ impl CombineNode {
     }
 }
 impl Node for CombineNode {
-    fn connect(&mut self, to_socket: SocketIdx, from_node: NodeRef, from_socket: SocketIdx) -> Result<(), SocketConnectionError> {
+    fn connect(
+        &mut self,
+        to_socket: SocketIdx,
+        from_node: NodeRef,
+        from_socket: SocketIdx,
+    ) -> Result<(), SocketConnectionError> {
         let mut from_node = from_node.write().unwrap();
         match to_socket {
             0 => {
@@ -224,12 +222,8 @@ impl Node for CombineNode {
 
     fn disconnect(&mut self, socket: SocketIdx) {
         match socket {
-            0 => {
-                self.source1 = None
-            }
-            1 => {
-                self.source2 = None
-            }
+            0 => self.source1 = None,
+            1 => self.source2 = None,
             _ => (),
         }
     }
@@ -241,7 +235,7 @@ impl Node for CombineNode {
 
         struct Combine {
             source1: Box<dyn Source<Item = AudioPcm>>,
-            source2:  Box<dyn Source<Item = AudioPcm>>,
+            source2: Box<dyn Source<Item = AudioPcm>>,
         }
         impl Source for Combine {
             type Item = AudioPcm;
@@ -251,7 +245,12 @@ impl Node for CombineNode {
                 let frame2 = self.source2.pull();
                 AudioPcm {
                     sample_rate: frame1.sample_rate,
-                    content: frame1.content.iter().zip(frame2.content.iter()).map(|(a, b)| *a + *b).collect(),
+                    content: frame1
+                        .content
+                        .iter()
+                        .zip(frame2.content.iter())
+                        .map(|(a, b)| *a + *b)
+                        .collect(),
                 }
             }
         }

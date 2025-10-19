@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/music-std", "crates/overtone-test-editor"]
+members = ["crates/lilv","crates/music-std"]
 
 [package]
 name = "overtone"
