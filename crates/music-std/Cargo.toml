@@ -13,6 +13,7 @@ rand = "*"
 [dev-dependencies]
 cpal = "0.16.0"
 anyhow = "1.0.100"
+pot = "*"
 
 [lib]
 crate-type = ["dylib", "rlib"]

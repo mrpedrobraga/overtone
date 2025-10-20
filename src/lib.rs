@@ -29,8 +29,12 @@ pub mod editor;
 pub mod plugin;
 pub mod project;
 pub mod renderer;
-pub mod transformer;
 pub mod task;
+pub mod transformer;
+
+pub mod plugin_prelude {
+    pub use crate::plugin::*;
+}
 
 /// Trait that allows extracting some metadata from foreign types.
 pub trait Info {

@@ -1,33 +1,21 @@
-use overtone::plugin::PluginMetadata;
-use overtone::{
-    overtone_plugin,
-    plugin::{Plugin, PluginContributions},
-};
+use overtone::{overtone_plugin, plugin_prelude::*};
 
 pub mod exporters;
 pub mod formats;
 pub mod renderers;
 
-struct MusicStd {}
-
-impl MusicStd {
-    fn new() -> Self {
-        MusicStd {}
-    }
-}
-
-static MUSIC_STD_METADATA: std::sync::OnceLock<PluginMetadata> = std::sync::OnceLock::new();
+struct MusicStd;
 
 impl Plugin for MusicStd {
-    fn get_metadata(&self) -> &PluginMetadata {
-        MUSIC_STD_METADATA.get_or_init(|| PluginMetadata {
+    fn get_metadata(&self) -> PluginMetadata {
+        PluginMetadata {
             id: "music-std".to_string(),
             name: "Music Standard Library".to_string(),
             description: Some(
                 "Default library containing lots of audio and musical functionality.".to_string(),
             ),
             authors: vec!["Overtone".to_string()],
-        })
+        }
     }
 
     fn get_contributions(&self) -> PluginContributions {
@@ -40,5 +28,5 @@ impl Plugin for MusicStd {
 }
 
 overtone_plugin! {
-    Box::new(MusicStd::new())
+    Box::new(MusicStd)
 }

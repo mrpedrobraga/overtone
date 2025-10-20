@@ -24,7 +24,7 @@ use std::path::PathBuf;
 /// and can contribute with Renderers, Track Fragments and more.
 pub trait Plugin {
     ///Returns some metadata for the plugin.
-    fn get_metadata(&self) -> &PluginMetadata;
+    fn get_metadata(&self) -> PluginMetadata;
 
     /// Signal executed when the plugin loads.
     fn on_plugin_load(&mut self, _project: &Project) {}

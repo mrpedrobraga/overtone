@@ -9,3 +9,5 @@ pub mod pcm;
 
 /// Module for new-gen sound fonts!
 pub mod timbre;
+/// Module for new-gen music interchange format!
+pub mod music;
