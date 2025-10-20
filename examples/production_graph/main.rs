@@ -48,10 +48,10 @@ fn main() {
     let export_path = "./examples/production_graph/exports/";
     let wav_exporter = new_node(WAVExporter::new(export_path));
 
-    connect!(a, 0, 0, ab);
-    connect!(b, 0, 1, ab);
-    connect!(ab, 0, 0, abc);
-    connect!(c, 0, 1, abc);
+    connect!(  a, 0, 0,  ab);
+    connect!(  b, 0, 1,  ab);
+    connect!( ab, 0, 0, abc);
+    connect!(  c, 0, 1, abc);
     connect!(abc, 0, 0, master_gain);
     connect!(master_gain, 0, 0, wav_exporter);
 
