@@ -7,7 +7,6 @@
 /// Module for Pulse-Code-Modulation audio formats. Check it out for more information.
 pub mod pcm;
 
-/// Module for new-gen sound fonts!
-pub mod timbre;
-/// Module for new-gen music interchange format!
-pub mod music;
+/// Module for the MUS standard, which contains new formats for
+/// storing and exchanging musical information.
+pub mod mus;

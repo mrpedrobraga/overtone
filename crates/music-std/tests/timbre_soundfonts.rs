@@ -1,6 +1,6 @@
 use overtone_music_std::formats::pcm::AudioPcm;
-use overtone_music_std::formats::timbre::*;
 use std::io::Write;
+use overtone_music_std::formats::mus::musi::{AudioFragment, VoronoiSampleFetchStrategy, Instrument, InstrumentMetadata, SampleFetchStrategy, Pack, PackMetadata};
 
 #[test]
 fn store() {
@@ -19,11 +19,11 @@ fn store() {
                 categories: vec!["synth".to_string(), "chiptune".to_string()],
             },
             fragments: vec![AudioFragment::RawPCM(AudioPcm::example())],
-            sampling_strategy: InstrumentSamplingStrategy::EuclideanVoronoi(
-                EuclideanVoronoiSamplingStrategy {
-                    dimensionality: 1,
-                    dimension_names: vec!["note_pitch".to_string()],
-                    points: vec![0],
+            sampling_strategy: SampleFetchStrategy::EuclideanVoronoi(
+                VoronoiSampleFetchStrategy {
+                    arity: 1,
+                    parameter_names: vec!["note_pitch".to_string()],
+                    sample_data: vec![0],
                 },
             ),
         }],

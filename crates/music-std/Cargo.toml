@@ -7,7 +7,7 @@ authors = ["Pedro Braga"]
 [dependencies]
 overtone = { path = "../.." }
 hound = { version = "3.5.1" }
-serde = { version = "1.0.228" }
+serde = { version = "1.0.228", features = ["rc"] }
 rand = "*"
 
 [dev-dependencies]
