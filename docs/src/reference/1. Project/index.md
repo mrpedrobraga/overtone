@@ -26,11 +26,16 @@ It is a file that looks somewhat like this:
 
 ```toml
 [info]
-name = "Funky Project"
-authors = ["John Doe <doejohn@domain.com>"]
+name = "GuitarAndPianoProject"
+license = "CC0"
+authors = ["Pedro Braga"]
 
-[plugins]
-some-plugin = { "local_path": "./plugins/my_plugin.so" }
+[editor]
+requires_version = "0.0.1"
+
+[dependencies]
+guitar-pro = { version = "3.0.0", path = "/plugins/guitar-pro.so" }
+fortepiano = { version = "2.0.1", path = "/plugins/fortepiano2.0.1.so" }
 ```
 
-The full Manifest specification is available [here](./manifest.md);
+The full Manifest specification is available [here](./manifest);

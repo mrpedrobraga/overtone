@@ -1,4 +1,5 @@
 ---
+title: Guide
 outline: deep
 ---
 
@@ -6,7 +7,7 @@ outline: deep
 
 If you want to use or develop for Overtone, this documentation should be all your need.
 
-- [I'm here as a user](getting_started);
+- [I'm here as a user](getting-started.md);
 - [I'm here as a developer](dev/developing);
 
 > [!NOTE]

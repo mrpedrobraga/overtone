@@ -9,8 +9,8 @@ Here's an example of the manifest of some project might look like.
 name = "Funky Project"
 authors = ["John Doe <doejohn@domain.com>"]
 
-[plugins]
-some-plugin = { "local_path": "./plugins/my_plugin.so" }
+[dependencies]
+some-plugin = { path = "./plugins/my_plugin.so" }
 ```
 
 ## The Schema
@@ -37,7 +37,7 @@ specific subdirectories. You can override what these are in this section.
     - the name of the directory where exports are placed (defaults to `'exports'`);
 
 ### Dependencies
-- `plugins : Vec<PluginDependencyEntry>`;
+- `dependencies : DependencyEntry[]`;
     - A section containing each dependency of your project. Each entry looks like this:
     - `path : Path`;
         - The path of your plugin on your file system;
