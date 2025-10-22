@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/lilv","crates/music-std"]
+members = ["crates/lilv","crates/music-std", "crates/tiny-graph"]
 
 [package]
 name = "overtone"

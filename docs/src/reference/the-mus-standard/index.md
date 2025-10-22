@@ -13,8 +13,17 @@ There is no hard standard for what markers there can be. Instead, markers work t
 An instrument developer might declare their "guitar plugin" can understand a `std:harmonics` marker...
 Then, if you create a melody that uses a marker with this name anywhere, you know that specific instrument will understand.
 
-Of course, it would be nice if developers can agree on how to call certain things: this way, the same musical data
-can be used in many different instruments...
+[Read More ->](./musx)
 
-And thus, part of the `MUS` format is a [set of standard markers](./standard-markers) that your instruments should be able to recognise.
+## Musical Instruments (`.musi`)
 
+MUSI is a data format for defining sample libraries that can play back musical excerpts (MUSX)
+or data transferred through the MUSP protocol.
+
+Each MUSI stores several samples annotated with numerical parameters.
+When the instrument is asked to play a note, it will choose the most suitable sample to play
+taking into account the requested note's parameters, the markers applied to it and the previous markers.
+
+This way, MUSI can react to articulations and ornaments and all the like.
+
+[Read More ->](./musi)

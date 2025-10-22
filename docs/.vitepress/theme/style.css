@@ -1,19 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;1,100;1,200;1,300;1,400;1,500;1,600;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400..800;1,400..800&display=swap');
-
-/*:root {
-    --vp-font-family-base:
-        'IBM Plex Mono', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
-        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-    --vp-font-family-mono:
-        ui-monospace, 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono',
-        'Courier New', monospace;
-    font-optical-sizing: auto;
-}*/
+@font-face {
+    font-family: 'LTSuperiorSerif';
+    src: url("./LTSuperior.otf");
+}
 
 .heading,
-h1 {
-    font-family: 'EB+Garamond';
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'LTSuperiorSerif', serif;
 }
 
 :root:where(:lang(zh)) {
@@ -135,14 +127,8 @@ h1 {
     /*--vp-c-brand-1: #93da63;*/
     --vp-c-brand-1: #db3939;
     --vp-c-brand-2: #df5168;
-    --vp-c-brand-3: #c48358;
+    --vp-c-brand-3: #259191;
     --vp-c-brand-soft: #fa8897;
-
-    &.dark {
-        --vp-c-brand-1: #f16a71;
-        --vp-c-brand-2: #df5168;
-        --vp-c-brand-3: #9c6037;
-    }
 
     /* DEPRECATED: Use `--vp-c-brand-1` instead. */
     --vp-c-brand: var(--vp-c-brand-1);
@@ -181,6 +167,12 @@ h1 {
     --vp-c-caution-2: var(--vp-c-red-2);
     --vp-c-caution-3: var(--vp-c-red-3);
     --vp-c-caution-soft: var(--vp-c-red-soft);
+}
+
+.dark {
+    --vp-c-brand-1: #f16a71;
+    --vp-c-brand-2: #df5168;
+    --vp-c-brand-3: #30a2b1;
 }
 
 .VPHomeFeatures {

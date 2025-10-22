@@ -1,12 +1,9 @@
 import { defineConfig } from 'vitepress'
-import { generateSidebar } from 'vitepress-sidebar'
 
 // https://vitepress.dev/reference/site-config
 
-
-
 export default defineConfig({
-    title: "Overtone Documentation",
+    title: "Overtone",
     description: "Documentation for 'overtone' and its 'music-std' standards.",
     srcDir: 'src',
     themeConfig: {
@@ -26,6 +23,29 @@ export default defineConfig({
                     { text: "As a Developer", link: "/guides/dev" }
                 ]
             },
+            {
+                text: "Docs",
+                items: [
+                    {
+                        text: "Learn",
+                        items: [
+                            { text: "Projects & Albums", link: "/reference/1. Project" },
+                            { text: "Songs & Compositions", link: "/reference/2. Arrangements" },
+                            { text: "Effects & Setups", link: "/reference/3. Production Setups" },
+                            { text: "Developing with Overtone", link: "/guides/dev" }
+                        ]
+                    },
+                    {
+                        text: "API & Standards Reference",
+                        items: [
+                            { text: "The MUS standard", link: "/reference/6. The MUS Format" },
+                            { text: "The Editor API", link: "/reference/api/editor" },
+                            { text: "UI Composer", link: "/reference/gui" },
+                            { text: "Builtin Plugins", link: "/reference/plugins" },
+                        ]
+                    }
+                ]
+            }
         ],
         socialLinks: [
             { icon: 'github', link: 'https://github.com/mrpedrobraga/overtone' }
@@ -34,15 +54,70 @@ export default defineConfig({
             message: "Made with <3 by mrpedrobraga",
             copyright: "Copyright © 2025 Pedro Braga"
         },
-        sidebar: generateSidebar({
-            documentRootPath: '/src',
-            useTitleFromFileHeading: true,
-            capitalizeEachWords: true,
-            hyphenToSpace: true,
-            useFolderLinkFromIndexFile: true,
-            sortMenusOrderNumericallyFromTitle: true,
-            removePrefixAfterOrdering: true,
-            prefixSeparator: "."
-        })
+        sidebar: [
+            {
+                text: "Guides",
+                base: "/guides",
+                link: "/",
+                collapsed: false,
+                items: [
+                    {
+                        text: "for Users",
+                        link: "/user"
+                    },
+                    {
+                        text: "for Developers",
+                        link: "/dev"
+                    }
+                ]
+            },
+            {
+                text: "Basic Concepts",
+                base: "/reference",
+                link: "/",
+                collapsed: false,
+                items: [
+                    {
+                        text: "Projects",
+                        link: "/project"
+                    },
+                    {
+                        text: "Arrangements",
+                        link: "/arrangement"
+                    },
+                    {
+                        text: "Productions",
+                        link: "/productions"
+                    }
+                ]
+            },
+            {
+                text: "Reference",
+                base: "/reference",
+                link: "/",
+                collapsed: false,
+                items: [
+                    {
+                        text: "The MUS Standard",
+                        base: "/reference/the-mus-standard",
+                        link: "/",
+                        items: [
+                            {
+                                text: "MUSX (Music Excerpts)",
+                                link: "/musx"
+                            },
+                            {
+                                text: "MUSI (Music Instruments)",
+                                link: "/musi"
+                            },
+                            {
+                                text: "Overtone Standard Notation",
+                                link: "/standard-markers"
+                            },
+                        ]
+                    }
+                ]
+            }
+        ]
     }
 })

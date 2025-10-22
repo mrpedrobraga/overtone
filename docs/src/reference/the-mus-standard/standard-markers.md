@@ -2,7 +2,7 @@
 
 For the benefit of the `MUS` community, here is a relation of standard markers your instruments should follow.
 This doesn't mean every instrument should do something for _every_ marker, but if it has any of these functionalities,
-you should prioritise using one of these names before creating your own.
+you should prioritize using one of these names before creating your own.
 
 #### A short aside on naming convention
 

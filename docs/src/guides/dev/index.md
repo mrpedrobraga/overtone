@@ -1,7 +1,6 @@
 # Getting Started (For Developers)
 
-Overtone and its builtin plugins are mostly Rust source code, with a bit of C here and there.
-The source code is available at [its GitHub repository](https://github.com/mrpedrobraga/overtone), with an MIT license.
+Overtone and its builtin plugins are mostly Rust [source code](/license), with a bit of C here and there.
 
 Rust is the officially supported language for developing Overtone plugins.
 You can [install it](https://rust-lang.org/tools/install/) from here, it doesn't take long.
