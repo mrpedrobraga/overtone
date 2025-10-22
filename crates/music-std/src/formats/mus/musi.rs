@@ -8,6 +8,7 @@
 //! - A Sampling Scheme, which describes how to fulfill the request to play some note;
 
 use std::collections::BTreeMap;
+use std::ops::Range;
 use serde::{Deserialize, Serialize};
 use crate::formats::pcm::AudioPcm;
 
@@ -58,6 +59,11 @@ pub struct InstrumentMetadata {
     ///
     /// For example, a drum kit might have categories: `Percussion`, `Acoustic`, `Recorded`.
     pub categories: Vec<String>,
+
+    /// If this instrument can play several pitches per voice.
+    pub voice_polyphony: bool,
+    /// How many voices this instrument can have
+    pub voice_range: Range<usize>
 }
 
 /// A single audio fragment, which contains data

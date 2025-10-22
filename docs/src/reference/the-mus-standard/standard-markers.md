@@ -61,7 +61,8 @@ Markers that modify or add effects to a single note or a set of notes.
 - `intensity` for setting the intensity with which a note is triggered.
 
 #### Ornaments
-- `stagger` for arpeggiating/strumming a chord;
+- `chord_derive` for deriving a chord from a single note. Useful for sketching harmony non-destructively;
+- `chord_stagger` for arpeggiating/strumming a chord;
     - **(a.k.a. Arpeggio, Strum)**;
 - `trill` for quickly arpeggiating a note up and down;
     - **(a.k.a. Trill)**;

@@ -1,5 +1,6 @@
 use overtone_music_std::formats::pcm::AudioPcm;
 use std::io::Write;
+use std::ops::Range;
 use overtone_music_std::formats::mus::musi::{AudioFragment, VoronoiSampleFetchStrategy, Instrument, InstrumentMetadata, SampleFetchStrategy, Pack, PackMetadata};
 
 #[test]
@@ -17,6 +18,8 @@ fn store() {
                 name: "Sine Wave".to_string(),
                 description: Some("Just a good ol' sine wave.".to_string()),
                 categories: vec!["synth".to_string(), "chiptune".to_string()],
+                voice_polyphony: true,
+                voice_range: 0..255
             },
             fragments: vec![AudioFragment::RawPCM(AudioPcm::example())],
             sampling_strategy: SampleFetchStrategy::EuclideanVoronoi(
