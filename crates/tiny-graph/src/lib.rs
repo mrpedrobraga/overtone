@@ -7,7 +7,7 @@ use std::{
 use std::marker::PhantomData;
 use graph::Graph;
 use nodes::{NumSource, Sum, YellNum};
-use crate::graph::Node;
+use crate::graph::{GraphPipeline, Node};
 use crate::nodes::{as_input, as_output, Double};
 
 pub mod old;
@@ -43,7 +43,6 @@ pub fn diamond () {
     let mut graph = Graph::new();
 
     let source = graph.insert(NumSource { value: 2.0 });
-    //let splitter = graph.insert(Split::<f64>::default());
     let doubler_l = graph.insert(Double);
     let doubler_r = graph.insert(Double);
     let sum = graph.insert(Sum);
@@ -57,6 +56,43 @@ pub fn diamond () {
 
     let mut p = graph.compile(output);
     p.run();
+}
 
+#[test]
+fn new_traversal() {
+    let mut graph = Graph::new();
 
+    //      ┌────────┐
+    //      │ NumSrc │0
+    //      └───┬────┘
+    //          │
+    //     ┌────┴────┐
+    //     │         │
+    // ┌───▼───┐ ┌───▼───┐
+    // │Double │1│Double │2
+    // └───┬───┘ └───┬───┘
+    //     │         │
+    //     └────┬────┘
+    //        ┌─▼─┐
+    //        │Sum│3
+    //        └─┬─┘
+    //          │
+    //      ┌───▼───┐
+    //      │YellNum│4
+    //      └───────┘
+
+    let source = graph.insert(NumSource { value: 2.0 });
+    let doubler_l = graph.insert(Double);
+    let doubler_r = graph.insert(Double);
+    let sum = graph.insert(Sum);
+    let output = graph.insert(YellNum);
+
+    graph.connect(source, 0, doubler_l, 0).unwrap();
+    graph.connect(source, 0, doubler_r, 0).unwrap();
+    graph.connect(doubler_l, 0, sum, 0).unwrap();
+    graph.connect(doubler_r, 0, sum, 1).unwrap();
+    graph.connect(sum, 0, output, 0).unwrap();
+
+    let mut p = GraphPipeline::from_graph2(&graph, output);
+    p.run();
 }

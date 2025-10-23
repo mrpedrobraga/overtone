@@ -12,7 +12,7 @@ impl Node for NumSource {
         let out = as_output::<f64>(out);
 
         Box::new(move || {
-            *out = dbg!(value);
+            *out = value;
         })
     }
 }
@@ -34,7 +34,7 @@ impl Node for Double {
     fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
         let in1 = as_input::<f64>(inputs[0]);
         let out = as_output::<f64>(outputs[0]);
-        Box::new(move || *out = dbg!(*in1) * 2.0)
+        Box::new(move || *out = *in1 * 2.0)
     }
 }
 
@@ -62,7 +62,7 @@ impl Node for YellNum {
     fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
         let in1 = as_input::<f64>(inputs[0]);
         Box::new(move || {
-            print!("{} - ", *in1);
+            print!("{};", *in1);
         })
     }
 }

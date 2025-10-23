@@ -86,6 +86,47 @@ pub struct GraphPipeline {
 }
 
 impl GraphPipeline {
+    pub fn from_graph2(graph: &Graph, sink: NodeKey) -> Self {
+        /// Precalculate the total amount of output sockets.
+        /// It's important that this vector never reallocates after we
+        /// start taking pointers from it;
+        let mut edge_data = Vec::with_capacity(128);
+        /// This vector can reallocate, but it's better if it doesn't, right?
+        /// Not all nodes in the graph will be part of the pipeline but this is the
+        /// only upper bound we get before we start traversing.
+        let mut vertices = Vec::with_capacity(graph.nodes.len());
+
+        let mut visited_nodes = HashSet::<NodeKey>::new();
+
+        fn depth_first_traverse(current_node_key: NodeKey, graph: &Graph, visited_nodes: &mut HashSet<NodeKey>) {
+            if visited_nodes.contains(&current_node_key) {
+                println!("Node {} already visited, skipping!", current_node_key.0);
+                return;
+            }
+            visited_nodes.insert(current_node_key);
+
+            println!("Touched node {}", current_node_key.0);
+
+            for (to, from) in graph.edges.iter() {
+                if to.0 != current_node_key {
+                    continue;
+                }
+
+                println!("Going through edge {}(p{}) <- {}(p{})", to.0.0, to.1.0, from.0.0, from.1.0);
+
+                depth_first_traverse(from.0, graph, visited_nodes);
+
+                println!("Walking back through edge {}(p{}) <- {}(p{})", to.0.0, to.1.0, from.0.0, from.1.0);
+            }
+
+            println!("Came back from node {}. Should allocate.", current_node_key.0);
+        }
+
+        depth_first_traverse(sink, graph, &mut visited_nodes);
+
+        Self { edge_data, vertices }
+    }
+
     /// Creates a pipeline given a graph — notice this takes a & reference to the graph,
     /// and thus does not mutate it.
     pub fn from_graph(graph: &Graph, sink: NodeKey) -> Self {
@@ -133,8 +174,6 @@ impl GraphPipeline {
                 }
             }
 
-            println!("NODE {:?}", node.0);
-
             let mut input_ptrs: Vec<(*const u8, SocketIndex)> = graph
                 .edges
                 .iter()
@@ -153,7 +192,6 @@ impl GraphPipeline {
                 .iter()
                 .copied()
                 .map(|(pointer, _)| {
-                    println!("READS {:?}", &pointer);
                     pointer
                 })
                 .collect::<Vec<_>>();
@@ -179,7 +217,6 @@ impl GraphPipeline {
                 .iter()
                 .copied()
                 .map(|(pointer, _)| {
-                    println!("WRITES {:?}", &pointer);
                     pointer
                 })
                 .collect::<Vec<_>>();
