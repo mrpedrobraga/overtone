@@ -2,6 +2,7 @@
 use std::{
     collections::{HashMap, HashSet},
     hash::Hash,
+    io::Write,
     time::Instant,
 };
 
@@ -259,7 +260,7 @@ impl Node for YellNum {
     fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
         let in1 = as_ref::<f64>(inputs[0]);
         Box::new(move || {
-            *in1;
+            print!("{} - ", *in1);
         })
     }
 }
@@ -284,6 +285,7 @@ fn main() {
         pipeline.run();
     }
     println!("Took {:?}", before.elapsed().div_f64(iterations as f64));
+    std::io::stdout().flush().unwrap();
 }
 
 #[inline]
