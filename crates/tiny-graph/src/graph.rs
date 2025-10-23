@@ -1,33 +1,24 @@
-#![allow(unused)]
-use std::{
-    collections::{HashMap, HashSet},
-    hash::Hash,
-    io::Write,
-    time::Instant,
-};
-
-pub mod old;
-
+use std::collections::{HashMap, HashSet};
 /// Function that represents a node's processing.
 ///
 /// When running, it will resolve and cast the pointers into the proper input and output types!
-type NodeFunc = fn(inputs: &[*const u8], outputs: &[*mut u8]);
+pub type NodeFunc = fn(inputs: &[*const u8], outputs: &[*mut u8]);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 #[repr(transparent)]
-struct NodeKey(usize);
+pub struct NodeKey(usize);
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
-struct SocketIndex(usize);
+pub struct SocketIndex(usize);
 
-trait Node {
+pub trait Node {
     /// Returns a function that processes the node in
     /// terms of its parameters.
     fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()>;
 }
 
-struct Graph {
+pub struct Graph {
     nodes: HashMap<NodeKey, Box<dyn Node>>,
     // The key is some node's input socket, the value is some node's output socket
     // Data flows in this direction   <----
@@ -37,7 +28,7 @@ struct Graph {
 }
 
 impl Graph {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             nodes: HashMap::new(),
             edges: HashMap::new(),
@@ -48,7 +39,7 @@ impl Graph {
     /// Inserts a new node in the graph — the node is now owned by the graph.
     ///
     /// The function returns a key which can be used to access the node temporarily.
-    fn insert<N: Node + 'static>(&mut self, node: N) -> NodeKey {
+    pub fn insert<N: Node + 'static>(&mut self, node: N) -> NodeKey {
         let index = self.next_id;
         self.next_id += 1;
         self.nodes.insert(NodeKey(index), Box::new(node));
@@ -60,7 +51,7 @@ impl Graph {
     /// # Usage
     ///
     /// Please realize that data flows from the output of a node to the input of the other node.
-    fn connect(
+    pub fn connect(
         &mut self,
         output_node: NodeKey,
         output_socket: usize,
@@ -76,12 +67,12 @@ impl Graph {
 
     /// Compiles this graph (from the perspective of a sink)
     /// so it can be executed thousands a time a second.
-    fn compile(&self, sink: NodeKey) -> GraphPipeline {
+    pub fn compile(&self, sink: NodeKey) -> GraphPipeline {
         GraphPipeline::from_graph(self, sink)
     }
 }
 
-struct GraphPipeline {
+pub struct GraphPipeline {
     /// Contains one allocation per graph edge.
     /// Shared memory space that the nodes use to do work.
     edge_data: Vec<u8>,
@@ -95,14 +86,26 @@ struct GraphPipeline {
 }
 
 impl GraphPipeline {
-    fn from_graph(graph: &Graph, sink: NodeKey) -> Self {
+    /// Creates a pipeline given a graph — notice this takes a & reference to the graph,
+    /// and thus does not mutate it.
+    pub fn from_graph(graph: &Graph, sink: NodeKey) -> Self {
         let mut pip = Self {
-            edge_data: Vec::with_capacity(32 /* Total amount */),
+            edge_data: Vec::with_capacity(128 /* Total amount */),
             vertices: Vec::new(),
         };
 
         let mut visited_nodes = HashSet::<NodeKey>::new();
         let mut edge_pointers: HashMap<(NodeKey, SocketIndex), *mut u8> = HashMap::new();
+
+        for (&(input_node, input_socket), &(output_node, output_socket)) in graph.edges.iter() {
+            let edge_position = pip.edge_data.len();
+            // Instead of pushing like this, allocate based on the edge's type's length.
+            pip.edge_data.extend(std::iter::repeat_n(0x00, 8));
+            edge_pointers.insert(
+                (output_node, output_socket),
+                pip.edge_data.as_mut_ptr().wrapping_byte_add(edge_position),
+            );
+        }
 
         fn traverse(
             graph: &Graph,
@@ -119,15 +122,6 @@ impl GraphPipeline {
 
             for (&(input_node, input_socket), &(output_node, output_socket)) in graph.edges.iter() {
                 if (input_node == node) {
-                    let edge_position = edge_data.len();
-                    // Instead of pushing like this, allocate based on the edge's type's length.
-                    edge_data.extend(std::iter::repeat_n(0x00, 8));
-                    // Push the current edge's pointer to the stack.
-                    edge_pointers.insert(
-                        (input_node, input_socket),
-                        edge_data.as_mut_ptr().wrapping_byte_add(edge_position),
-                    );
-
                     traverse(
                         graph,
                         output_node,
@@ -139,17 +133,15 @@ impl GraphPipeline {
                 }
             }
 
-            println!("For node {:?}", node);
+            println!("NODE {:?}", node.0);
 
             let mut input_ptrs: Vec<(*const u8, SocketIndex)> = graph
                 .edges
                 .iter()
-                .filter_map(|(&(input_node, input_socket), _)| {
+                .filter_map(|(&(input_node, input_socket), output)| {
                     if input_node == node {
-                        println!("Input edge {:?}", (input_node, input_socket));
-
                         edge_pointers
-                            .get(&(input_node, input_socket))
+                            .get(output)
                             .map(|&p| (p as *const u8, input_socket))
                     } else {
                         None
@@ -160,17 +152,20 @@ impl GraphPipeline {
             let input_ptrs = input_ptrs
                 .iter()
                 .copied()
-                .map(|(pointer, _)| pointer)
+                .map(|(pointer, _)| {
+                    println!("READS {:?}", &pointer);
+                    pointer
+                })
                 .collect::<Vec<_>>();
 
             let mut output_ptrs: Vec<(*mut u8, SocketIndex)> = graph
                 .edges
                 .iter()
                 .filter_map(
-                    |(&(input_node, input_socket), &(output_node, output_socket))| {
+                    |(_, &(output_node, output_socket))| {
                         if output_node == node {
                             edge_pointers
-                                .get(&(input_node, input_socket))
+                                .get(&(output_node, output_socket))
                                 .map(|&p| (p, output_socket))
                         } else {
                             None
@@ -179,18 +174,19 @@ impl GraphPipeline {
                 )
                 .collect();
             output_ptrs.sort_by_key(|(_, index)| *index);
+            output_ptrs.dedup_by_key(|(_, index)| *index);
             let output_ptrs = output_ptrs
                 .iter()
                 .copied()
-                .map(|(pointer, _)| pointer)
+                .map(|(pointer, _)| {
+                    println!("WRITES {:?}", &pointer);
+                    pointer
+                })
                 .collect::<Vec<_>>();
 
             // When it's time to bind a node's function, we give it
             // two slices `&[*const u8]` `&[*mut u8]`.
             // Then we call its implementation of `Node::bind(inputs: &[*const u8], outputs: &[*mut u8])`
-            //
-            // Struggling to know what pointers will be bound to each node...
-            // The stack thing actually doesn't work since the inputs / outputs for a node aren't contiguous in memory.
             if let Some(node_obj) = graph.nodes.get(&node) {
                 vertices.push(node_obj.bind(&input_ptrs, &output_ptrs));
             }
@@ -204,8 +200,6 @@ impl GraphPipeline {
             &mut edge_pointers,
             &mut pip.vertices,
         );
-
-        //dbg!(edge_pointers);
 
         pip
     }
@@ -223,111 +217,9 @@ impl GraphPipeline {
     ///
     /// Not sure if this _should_ be mutable. I guess since nodes have state that mutates
     /// when this runs, yeah, sure.
-    fn run(&mut self) {
+    pub fn run(&mut self) {
         for vertex in self.vertices.iter_mut() {
             vertex()
         }
     }
-}
-
-struct NumSource {
-    value: f64,
-}
-impl Node for NumSource {
-    fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
-        let value = self.value;
-        let out = outputs[0];
-        let out = as_mut_ref::<f64>(out);
-
-        Box::new(move || {
-            *out = value;
-        })
-    }
-}
-
-struct Sum;
-impl Node for Sum {
-    fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
-        let in1 = as_ref::<f64>(inputs[0]);
-        let in2 = as_ref::<f64>(inputs[1]);
-        let out = as_mut_ref::<f64>(outputs[0]);
-        Box::new(move || *out = *in1 + *in2)
-    }
-}
-
-struct YellNum;
-impl Node for YellNum {
-    fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
-        let in1 = as_ref::<f64>(inputs[0]);
-        Box::new(move || {
-            print!("{} - ", *in1);
-        })
-    }
-}
-
-fn main() {
-    let mut graph = Graph::new();
-
-    let a = graph.insert(NumSource { value: 2.0 });
-    let b = graph.insert(NumSource { value: 1.0 });
-    let c = graph.insert(Sum);
-    let d = graph.insert(YellNum);
-
-    graph.connect(a, 0, c, 0).unwrap();
-    graph.connect(b, 0, c, 1).unwrap();
-    graph.connect(c, 0, d, 0).unwrap();
-
-    let mut pipeline = graph.compile(d);
-
-    let iterations = 1000;
-    let before = Instant::now();
-    for _ in 0..iterations {
-        pipeline.run();
-    }
-    println!("Took {:?}", before.elapsed().div_f64(iterations as f64));
-    std::io::stdout().flush().unwrap();
-}
-
-#[inline]
-pub fn as_ref<'a, T>(ptr: *const u8) -> &'a T {
-    unsafe { &*ptr.cast::<T>() }
-}
-
-#[inline]
-pub fn as_mut_ref<'a, T>(ptr: *mut u8) -> &'a mut T {
-    unsafe { &mut *ptr.cast::<T>() }
-}
-
-#[test]
-pub fn captures() {
-    struct A {
-        value: i32,
-    }
-    trait Trait {
-        fn get_thing(&self, out: *mut i32) -> Box<dyn FnMut()>;
-    }
-    impl Trait for A {
-        fn get_thing(&self, out: *mut i32) -> Box<dyn FnMut()> {
-            let value = self.value;
-            Box::new(move || {
-                unsafe { *out += value };
-            })
-        }
-    }
-
-    let a0 = A { value: 37 };
-    let a1 = A { value: 14 };
-
-    let mut things = Vec::new();
-
-    let mut val = 0;
-
-    things.push(a0.get_thing(&mut val as *mut i32));
-    things.push(a1.get_thing(&mut val as *mut i32));
-
-    for mut element in things {
-        element();
-    }
-
-    dbg!(val);
 }
