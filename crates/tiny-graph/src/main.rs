@@ -16,7 +16,7 @@ type NodeFunc = fn(inputs: &[*const u8], outputs: &[*mut u8]);
 #[repr(transparent)]
 struct NodeKey(usize);
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
 #[repr(transparent)]
 struct SocketIndex(usize);
 
@@ -140,7 +140,7 @@ impl GraphPipeline {
 
             println!("For node {:?}", node);
 
-            let input_ptrs: Vec<*const u8> = graph
+            let mut input_ptrs: Vec<(*const u8, SocketIndex)> = graph
                 .edges
                 .iter()
                 .filter_map(|(&(input_node, input_socket), _)| {
@@ -149,27 +149,40 @@ impl GraphPipeline {
 
                         edge_pointers
                             .get(&(input_node, input_socket))
-                            .map(|&p| p as *const u8)
+                            .map(|&p| (p as *const u8, input_socket))
                     } else {
                         None
                     }
                 })
                 .collect();
+            input_ptrs.sort_by_key(|(_, index)| *index);
+            let input_ptrs = input_ptrs
+                .iter()
+                .copied()
+                .map(|(pointer, _)| pointer)
+                .collect::<Vec<_>>();
 
-            let output_ptrs: Vec<*mut u8> = graph
+            let mut output_ptrs: Vec<(*mut u8, SocketIndex)> = graph
                 .edges
                 .iter()
                 .filter_map(
                     |(&(input_node, input_socket), &(output_node, output_socket))| {
                         if output_node == node {
-                            println!("Output edge {:?}", (input_node, input_socket));
-                            edge_pointers.get(&(input_node, input_socket)).copied()
+                            edge_pointers
+                                .get(&(input_node, input_socket))
+                                .map(|&p| (p, output_socket))
                         } else {
                             None
                         }
                     },
                 )
                 .collect();
+            output_ptrs.sort_by_key(|(_, index)| *index);
+            let output_ptrs = output_ptrs
+                .iter()
+                .copied()
+                .map(|(pointer, _)| pointer)
+                .collect::<Vec<_>>();
 
             // When it's time to bind a node's function, we give it
             // two slices `&[*const u8]` `&[*mut u8]`.
@@ -226,7 +239,6 @@ impl Node for NumSource {
         let out = as_mut_ref::<f64>(out);
 
         Box::new(move || {
-            dbg!(value);
             *out = value;
         })
     }
@@ -238,7 +250,7 @@ impl Node for Sum {
         let in1 = as_ref::<f64>(inputs[0]);
         let in2 = as_ref::<f64>(inputs[1]);
         let out = as_mut_ref::<f64>(outputs[0]);
-        Box::new(move || *out = dbg!(*in1) + dbg!(*in2))
+        Box::new(move || *out = *in1 + *in2)
     }
 }
 
@@ -246,7 +258,9 @@ struct YellNum;
 impl Node for YellNum {
     fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
         let in1 = as_ref::<f64>(inputs[0]);
-        Box::new(move || println!("Value = {}", *in1))
+        Box::new(move || {
+            *in1;
+        })
     }
 }
 
@@ -263,7 +277,13 @@ fn main() {
     graph.connect(c, 0, d, 0).unwrap();
 
     let mut pipeline = graph.compile(d);
-    pipeline.run();
+
+    let iterations = 1000;
+    let before = Instant::now();
+    for _ in 0..iterations {
+        pipeline.run();
+    }
+    println!("Took {:?}", before.elapsed().div_f64(iterations as f64));
 }
 
 #[inline]
