@@ -28,7 +28,7 @@ pub fn speed() {
     graph.connect(b, 0, c, 1).unwrap();
     graph.connect(c, 0, d, 0).unwrap();
 
-    let mut pipeline = graph.compile(d);
+    let mut pipeline = graph.compile(d, 0);
 
     let iterations = 1000;
     let before = black_box(Instant::now());
@@ -39,28 +39,9 @@ pub fn speed() {
     std::io::stdout().flush().unwrap();
 }
 
-#[test]
-pub fn diamond () {
-    let mut graph = Graph::new();
-
-    let source = graph.insert(NumSource { value: 2.0 });
-    let doubler_l = graph.insert(Double);
-    let doubler_r = graph.insert(Double);
-    let sum = graph.insert(Sum);
-    let output = graph.insert(YellNum);
-
-    graph.connect(source, 0, doubler_l, 0).unwrap();
-    graph.connect(source, 0, doubler_r, 0).unwrap();
-    graph.connect(doubler_l, 0, sum, 0).unwrap();
-    graph.connect(doubler_r, 0, sum, 1).unwrap();
-    graph.connect(sum, 0, output, 0).unwrap();
-
-    let mut p = graph.compile(output);
-    p.run();
-}
 
 #[test]
-fn new_traversal() {
+fn diamond() {
     let mut graph = Graph::new();
 
     //      ┌────────┐
@@ -82,7 +63,7 @@ fn new_traversal() {
     //      │YellNum│4
     //      └───────┘
 
-    let source = graph.insert(NumSource { value: 2.0 });
+    let source = graph.insert(NumSource { value: 3.5 });
     let doubler_l = graph.insert(Double);
     let doubler_r = graph.insert(Double);
     let sum = graph.insert(Sum);
@@ -94,7 +75,7 @@ fn new_traversal() {
     graph.connect(doubler_r, 0, sum, 1).unwrap();
     graph.connect(sum, 0, output, 0).unwrap();
 
-    let mut p = GraphPipeline::from_graph2(&graph, output, 0);
+    let mut p = GraphPipeline::from_graph(&graph, output, 0);
     p.run();
 }
 

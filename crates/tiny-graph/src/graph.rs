@@ -27,12 +27,6 @@ impl SocketData {
 }
 
 pub trait Node {
-    /// Returns a function that processes the node in
-    /// terms of its parameters.
-    ///
-    /// It takes self here simply to be dyn-compatible.
-    fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()>;
-
     /// Returns a function that processes the node in terms of its parameters.
     ///
     /// It takes self here simply to be dyn-compatible.
@@ -99,8 +93,8 @@ impl Graph {
 
     /// Compiles this graph (from the perspective of a sink)
     /// so it can be executed thousands a time a second.
-    pub fn compile(&self, sink: NodeKey) -> GraphPipeline {
-        GraphPipeline::from_graph(self, sink)
+    pub fn compile(&self, sink: NodeKey, sink_socket: usize) -> GraphPipeline {
+        GraphPipeline::from_graph(self, sink, sink_socket)
     }
 }
 
@@ -118,16 +112,11 @@ pub struct GraphPipeline {
 }
 
 impl GraphPipeline {
-    pub fn from_graph2(graph: &Graph, sink_node: NodeKey, sink_socket: usize) -> Self {
+    pub fn from_graph(graph: &Graph, sink_node: NodeKey, sink_socket: usize) -> Self {
         /// Precalculate the total amount of output sockets.
         /// It's important that this vector never reallocates after we
         /// start taking pointers from it;
-        let mut edge_data = Vec::with_capacity(128);
-        fn allocate<T>(buffer: &mut Vec<u8>) -> *mut u8 {
-            let index = buffer.len();
-            buffer.extend(std::iter::repeat_n(0x00, size_of::<T>()));
-            (&mut buffer[index]) as *mut u8
-        }
+        let mut edge_data = Vec::with_capacity(256);
 
         /// This vector can reallocate, but it's better if it doesn't, right?
         /// Not all nodes in the graph will be part of the pipeline but this is the
@@ -200,9 +189,14 @@ impl GraphPipeline {
 
             let mut output_pointer_to_return = None;
 
-            let output_pointers = (0..).scan((), move |_, output_index| {
-                if let Some(output) = current_node.output_socket(output_index) {
-                    let pointer = allocate::<f32>(edge_data);
+            let output_pointers = (0..)
+                .map_while(|output_index| {
+                    current_node
+                        .output_socket(output_index)
+                        .map(|output| (output_index, output))
+                })
+                .map(|(output_index, output)| {
+                    let pointer = allocate::<f64>(edge_data);
                     socket_pointer_cache
                         .insert((current_node_key, SocketIndex(output_index)), pointer);
 
@@ -214,11 +208,8 @@ impl GraphPipeline {
                         "- Allocating output {} with {} bytes.",
                         output_index, output.size
                     );
-                    Some(pointer)
-                } else {
-                    None
-                }
-            });
+                    pointer
+                });
 
             println!(
                 "Allocating node {} and popping it from stack.",
@@ -251,114 +242,6 @@ impl GraphPipeline {
         }
     }
 
-    /// Creates a pipeline given a graph — notice this takes a & reference to the graph,
-    /// and thus does not mutate it.
-    pub fn from_graph(graph: &Graph, sink: NodeKey) -> Self {
-        let mut pip = Self {
-            edge_data: Vec::with_capacity(128 /* Total amount */),
-            vertices: Vec::new(),
-        };
-
-        let mut visited_nodes = HashSet::<NodeKey>::new();
-        let mut edge_pointers: HashMap<(NodeKey, SocketIndex), *mut u8> = HashMap::new();
-
-        for (&(input_node, input_socket), &(output_node, output_socket)) in graph.edges.iter() {
-            let edge_position = pip.edge_data.len();
-            // Instead of pushing like this, allocate based on the edge's type's length.
-            pip.edge_data.extend(std::iter::repeat_n(0x00, 8));
-            edge_pointers.insert(
-                (output_node, output_socket),
-                pip.edge_data.as_mut_ptr().wrapping_byte_add(edge_position),
-            );
-        }
-
-        fn traverse(
-            graph: &Graph,
-            node: NodeKey,
-            visited: &mut HashSet<NodeKey>,
-            edge_data: &mut Vec<u8>,
-            edge_pointers: &mut HashMap<(NodeKey, SocketIndex), *mut u8>,
-            vertices: &mut Vec<Box<dyn FnMut()>>,
-        ) {
-            if visited.contains(&node) {
-                return;
-            }
-            visited.insert(node);
-
-            for (&(input_node, input_socket), &(output_node, output_socket)) in graph.edges.iter() {
-                if (input_node == node) {
-                    traverse(
-                        graph,
-                        output_node,
-                        visited,
-                        edge_data,
-                        edge_pointers,
-                        vertices,
-                    );
-                }
-            }
-
-            let mut input_ptrs: Vec<(*const u8, SocketIndex)> = graph
-                .edges
-                .iter()
-                .filter_map(|(&(input_node, input_socket), output)| {
-                    if input_node == node {
-                        edge_pointers
-                            .get(output)
-                            .map(|&p| (p as *const u8, input_socket))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-            input_ptrs.sort_by_key(|(_, index)| *index);
-            let input_ptrs = input_ptrs
-                .iter()
-                .copied()
-                .map(|(pointer, _)| pointer)
-                .collect::<Vec<_>>();
-
-            let mut output_ptrs: Vec<(*mut u8, SocketIndex)> = graph
-                .edges
-                .iter()
-                .filter_map(|(_, &(output_node, output_socket))| {
-                    if output_node == node {
-                        edge_pointers
-                            .get(&(output_node, output_socket))
-                            .map(|&p| (p, output_socket))
-                    } else {
-                        None
-                    }
-                })
-                .collect();
-            output_ptrs.sort_by_key(|(_, index)| *index);
-            output_ptrs.dedup_by_key(|(_, index)| *index);
-            let output_ptrs = output_ptrs
-                .iter()
-                .copied()
-                .map(|(pointer, _)| pointer)
-                .collect::<Vec<_>>();
-
-            // When it's time to bind a node's function, we give it
-            // two slices `&[*const u8]` `&[*mut u8]`.
-            // Then we call its implementation of `Node::bind(inputs: &[*const u8], outputs: &[*mut u8])`
-            if let Some(node_obj) = graph.nodes.get(&node) {
-                vertices.push(node_obj.bind(&input_ptrs, &output_ptrs));
-            }
-        }
-
-        traverse(
-            graph,
-            sink,
-            &mut visited_nodes,
-            &mut pip.edge_data,
-            &mut edge_pointers,
-            &mut pip.vertices,
-        );
-
-        pip
-    }
-
     /// Runs the pipeline.
     ///
     /// This function is incredibly fast.
@@ -377,4 +260,16 @@ impl GraphPipeline {
             vertex()
         }
     }
+}
+
+fn allocate_aligned(buffer: &mut Vec<u8>, size: usize, align: usize) -> *mut u8 {
+    let current_pointer = buffer.as_mut_ptr().wrapping_byte_add(buffer.len());
+    let padding = align - current_pointer as usize % align;
+    let current_pointer = current_pointer.wrapping_add(padding);
+    buffer.extend(std::iter::repeat(0x00).take(padding + size));
+    current_pointer
+}
+
+fn allocate<T>(buffer: &mut Vec<u8>) -> *mut u8 {
+    allocate_aligned(buffer, size_of::<T>(), align_of::<T>())
 }

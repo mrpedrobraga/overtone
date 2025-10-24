@@ -6,16 +6,6 @@ pub struct NumSource {
 }
 
 impl Node for NumSource {
-    fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
-        let value = self.value;
-        let out = outputs[0];
-        let out = as_output::<f64>(out);
-
-        Box::new(move || {
-            *out = value;
-        })
-    }
-
     fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let value = self.value;
         let out = as_output::<f64>(parameters.next().unwrap());
@@ -42,13 +32,6 @@ impl Node for NumSource {
 pub struct Sum;
 
 impl Node for Sum {
-    fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
-        let in1 = as_input::<f64>(inputs[0]);
-        let in2 = as_input::<f64>(inputs[1]);
-        let out = as_output::<f64>(outputs[0]);
-        Box::new(move || *out = *in1 + *in2)
-    }
-
     fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let in1 = as_input::<f64>(parameters.next().unwrap());
         let in2 = as_input::<f64>(parameters.next().unwrap());
@@ -76,12 +59,6 @@ impl Node for Sum {
 pub struct Double;
 
 impl Node for Double {
-    fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
-        let in1 = as_input::<f64>(inputs[0]);
-        let out = as_output::<f64>(outputs[0]);
-        Box::new(move || *out = *in1 * 2.0)
-    }
-
     fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let in1 = as_input::<f64>(parameters.next().unwrap());
         let out = as_output::<f64>(parameters.next().unwrap());
@@ -125,16 +102,9 @@ impl Node for Double {
 pub struct YellNum;
 
 impl Node for YellNum {
-    fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()> {
-        let in1 = as_input::<f64>(inputs[0]);
-        Box::new(move || {
-            print!("{};", *in1);
-        })
-    }
-
     fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let in1 = as_input::<f64>(parameters.next().unwrap());
-        
+
         Box::new(move || {
             print!("{};", *in1);
         })
