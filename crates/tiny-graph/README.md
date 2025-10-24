@@ -1,15 +1,63 @@
-# AudioGraph
+# Cables
 
-The implementation of Production Graphs has a few particular requirements:
+A library for creating directed acyclic graphs that will be executed thousands of times a second.
+It's inspired by Blender's geometry nodes in which nodes may have multiple input and output sockets.
 
-- Graphs must be:
-    - Mutable;
-        - Some graph draining tasks (like exporting) will lock the graph for big chunks of time;
-        - Other tasks like previewing will lock the graph for little chunks of time, allowing smooth editing;
-- Nodes may have many input and output sockets;
-    - A single output socket can connect to many input sockets;
-    - An input socket can receive a single connection;
-    - When two sockets are connected, the connection is validated once, and then it's safe to pull data through at audio rates (thousands of time per second);
-- Nodes may have internal state;
-    - Some state associated with the node should be serialized... think audio plugin sliders and knobs. But these will probably be coded as inputs;
-    - Internal state (which will be mutated by executing the graph) need not be serializable;
+I created this implementation of Graph to be used for real-time audio processing. At 44100Hz, a standard
+sample rate for audio, an entire graph like this needs to run under 22 microseconds.
+
+Even though this graph was designed for audio, you can use it for anything else.
+High sample rate never hertz. Hurts. Whatever.
+
+```rust
+fn main() {
+    let mut graph = Graph::new();
+    
+    let a = graph.insert(Num::new(40.0));
+    let b = graph.insert(Num::new(60.0));
+    let ab = graph.insert(Sum);
+    
+    graph.connect(a, 0, ab, 0);
+    graph.connect(b, 0, ab, 1);
+   
+    // Compile the graph into an efficient pipeline.
+    // Compiling the graph, traversing it, checking the types
+    // is slow (in order of microseconds).
+    //
+    // You need to call this every time the graph changes.
+    let pipeline = graph.compile();
+    
+    // Running a compiled graph
+    // is fast (in the order of nanoseconds).
+    let result = pipeline.run();
+}
+```
+
+You _will_ need to create your own nodes. This library doesn't come with any.
+
+Nodes are effectively just functions, with a lot of reflection.
+
+```rust
+struct Num(f32);
+impl Num { pub fn new(num: f32) { Self(num) } }
+
+#[node_impl]
+impl Node for Num {
+    fn process(&self, out: &mut f32) {
+        *out = self.num
+    }
+}
+
+struct Sum;
+
+#[node_impl]
+impl Node for Sum {
+    fn process(&self, a: &f32, b: &f32, out: &mut f32) {
+        *out = *a + *b;
+    }
+}
+```
+
+## Licensing
+
+MIT

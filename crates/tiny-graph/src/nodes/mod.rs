@@ -1,3 +1,4 @@
+use std::hint::black_box;
 use std::marker::PhantomData;
 use crate::graph::{Node, SocketData};
 
@@ -106,7 +107,8 @@ impl Node for YellNum {
         let in1 = as_input::<f64>(parameters.next().unwrap());
 
         Box::new(move || {
-            print!("{};", *in1);
+            //print!("{};", *in1);
+            black_box(*in1);
         })
     }
 

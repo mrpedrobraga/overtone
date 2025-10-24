@@ -97,5 +97,13 @@ fn diamond() {
     graph.connect(sum, 0, output, 0).unwrap();
 
     let mut p = GraphPipeline::from_graph(&graph, output, 0);
-    p.run();
+
+    let iterations = 44100;
+    let before = Instant::now();
+    for _ in 0..iterations {
+        black_box(p.run());
+    }
+    let elapsed = before.elapsed();
+    println!("Total {:?} ({:?} per run)", elapsed, elapsed.div_f64(iterations as f64));
+    std::io::stdout().flush().unwrap();
 }
