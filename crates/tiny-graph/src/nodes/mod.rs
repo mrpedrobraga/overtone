@@ -1,5 +1,5 @@
 use std::marker::PhantomData;
-use crate::graph::Node;
+use crate::graph::{Node, SocketData};
 
 pub struct NumSource {
     pub value: f64,
@@ -15,6 +15,28 @@ impl Node for NumSource {
             *out = value;
         })
     }
+
+    fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+        let value = self.value;
+        let out = as_output::<f64>(parameters.next().unwrap());
+
+        Box::new(move || {
+            *out = value;
+        })
+    }
+
+    fn input_socket(&self, socket_index: usize) -> Option<SocketData> {
+        match socket_index {
+            _ => None,
+        }
+    }
+
+    fn output_socket(&self, socket_index: usize) -> Option<SocketData> {
+        match socket_index {
+            0 => Some(SocketData::new::<f64>()),
+            _ => None,
+        }
+    }
 }
 
 pub struct Sum;
@@ -26,6 +48,29 @@ impl Node for Sum {
         let out = as_output::<f64>(outputs[0]);
         Box::new(move || *out = *in1 + *in2)
     }
+
+    fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+        let in1 = as_input::<f64>(parameters.next().unwrap());
+        let in2 = as_input::<f64>(parameters.next().unwrap());
+        let out = as_output::<f64>(parameters.next().unwrap());
+
+        Box::new(move || *out = *in1 + *in2)
+    }
+
+    fn input_socket(&self, socket_index: usize) -> Option<SocketData> {
+        match socket_index {
+            0 => Some(SocketData::new::<f64>()),
+            1 => Some(SocketData::new::<f64>()),
+            _ => None,
+        }
+    }
+
+    fn output_socket(&self, socket_index: usize) -> Option<SocketData> {
+        match socket_index {
+            0 => Some(SocketData::new::<f64>()),
+            _ => None,
+        }
+    }
 }
 
 pub struct Double;
@@ -35,6 +80,27 @@ impl Node for Double {
         let in1 = as_input::<f64>(inputs[0]);
         let out = as_output::<f64>(outputs[0]);
         Box::new(move || *out = *in1 * 2.0)
+    }
+
+    fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+        let in1 = as_input::<f64>(parameters.next().unwrap());
+        let out = as_output::<f64>(parameters.next().unwrap());
+
+        Box::new(move || *out = *in1 * 2.0)
+    }
+
+    fn input_socket(&self, socket_index: usize) -> Option<SocketData> {
+        match socket_index {
+            0 => Some(SocketData::new::<f64>()),
+            _ => None,
+        }
+    }
+
+    fn output_socket(&self, socket_index: usize) -> Option<SocketData> {
+        match socket_index {
+            0 => Some(SocketData::new::<f64>()),
+            _ => None,
+        }
     }
 }
 
@@ -64,6 +130,27 @@ impl Node for YellNum {
         Box::new(move || {
             print!("{};", *in1);
         })
+    }
+
+    fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+        let in1 = as_input::<f64>(parameters.next().unwrap());
+        
+        Box::new(move || {
+            print!("{};", *in1);
+        })
+    }
+
+    fn input_socket(&self, socket_index: usize) -> Option<SocketData> {
+        match socket_index {
+            0 => Some(SocketData::new::<f64>()),
+            _ => None,
+        }
+    }
+
+    fn output_socket(&self, socket_index: usize) -> Option<SocketData> {
+        match socket_index {
+            _ => None,
+        }
     }
 }
 

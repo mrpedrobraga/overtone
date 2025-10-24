@@ -1,3 +1,4 @@
+use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
 /// Function that represents a node's processing.
 ///
@@ -12,10 +13,41 @@ pub struct NodeKey(usize);
 #[repr(transparent)]
 pub struct SocketIndex(usize);
 
+pub struct SocketData {
+    type_id: TypeId,
+    size: usize,
+}
+impl SocketData {
+    pub fn new<T: 'static>() -> Self {
+        Self {
+            type_id: TypeId::of::<T>(),
+            size: size_of::<T>(),
+        }
+    }
+}
+
 pub trait Node {
     /// Returns a function that processes the node in
     /// terms of its parameters.
+    ///
+    /// It takes self here simply to be dyn-compatible.
     fn bind(&self, inputs: &[*const u8], outputs: &[*mut u8]) -> Box<dyn FnMut()>;
+
+    /// Returns a function that processes the node in terms of its parameters.
+    ///
+    /// It takes self here simply to be dyn-compatible.
+    ///
+    /// TODO: Maybe instead of returning a boxed closure, which is going to be
+    /// put in a Vec anyways, maybe pass an arena for `bind` to allocate the closure in.
+    fn bind2(&self, parameters: &mut dyn Iterator<Item = *mut u8>) -> Box<dyn FnMut()>;
+
+    /// Returns data about an input socket.
+    /// Take self so the trait is dyn-compatible.
+    fn input_socket(&self, socket_index: usize) -> Option<SocketData>;
+
+    /// Returns data about an output socket.
+    /// Take self so the trait is dyn-compatible.
+    fn output_socket(&self, socket_index: usize) -> Option<SocketData>;
 }
 
 pub struct Graph {
@@ -86,45 +118,137 @@ pub struct GraphPipeline {
 }
 
 impl GraphPipeline {
-    pub fn from_graph2(graph: &Graph, sink: NodeKey) -> Self {
+    pub fn from_graph2(graph: &Graph, sink_node: NodeKey, sink_socket: usize) -> Self {
         /// Precalculate the total amount of output sockets.
         /// It's important that this vector never reallocates after we
         /// start taking pointers from it;
         let mut edge_data = Vec::with_capacity(128);
+        fn allocate<T>(buffer: &mut Vec<u8>) -> *mut u8 {
+            let index = buffer.len();
+            buffer.extend(std::iter::repeat_n(0x00, size_of::<T>()));
+            (&mut buffer[index]) as *mut u8
+        }
+
         /// This vector can reallocate, but it's better if it doesn't, right?
         /// Not all nodes in the graph will be part of the pipeline but this is the
         /// only upper bound we get before we start traversing.
         let mut vertices = Vec::with_capacity(graph.nodes.len());
 
+        /// Stores all the nodes we've already visited.
         let mut visited_nodes = HashSet::<NodeKey>::new();
+        /// Pointers for all the output sockets' memory regions.
+        let mut socket_pointers = HashMap::<(NodeKey, SocketIndex), *mut u8>::new();
 
-        fn depth_first_traverse(current_node_key: NodeKey, graph: &Graph, visited_nodes: &mut HashSet<NodeKey>) {
+        fn depth_first_traverse(
+            current_node_key: NodeKey,
+            current_output_socket: SocketIndex,
+            graph: &Graph,
+            visited_nodes: &mut HashSet<NodeKey>,
+            edge_data: &mut Vec<u8>,
+            socket_pointer_cache: &mut HashMap<(NodeKey, SocketIndex), *mut u8>,
+            vertices: &mut Vec<Box<dyn FnMut()>>,
+        ) -> Option<*mut u8> {
             if visited_nodes.contains(&current_node_key) {
-                println!("Node {} already visited, skipping!", current_node_key.0);
-                return;
+                println!("Node {} already visited: going back.", current_node_key.0);
+                return Some(
+                    socket_pointer_cache
+                        .get(&(current_node_key, current_output_socket))
+                        .copied()
+                        .unwrap(),
+                );
             }
             visited_nodes.insert(current_node_key);
 
-            println!("Touched node {}", current_node_key.0);
+            println!("Pushed node {} onto the stack.", current_node_key.0);
 
-            for (to, from) in graph.edges.iter() {
-                if to.0 != current_node_key {
-                    continue;
+            /// TODO: Sort the edges based on the current node's socket order.
+            let input_pointers = graph
+                .edges
+                .iter()
+                .filter(|((to_node, _), _)| *to_node == current_node_key)
+                .map(|(to, from)| {
+                    println!(
+                        "Walking through {}(p{}) -> {}(p{})",
+                        to.0.0, to.1.0, from.0.0, from.1.0
+                    );
+
+                    let input_pointer = depth_first_traverse(
+                        from.0,
+                        from.1,
+                        graph,
+                        visited_nodes,
+                        edge_data,
+                        socket_pointer_cache,
+                        vertices,
+                    )
+                    .unwrap();
+
+                    println!(
+                        "Walking through {}(p{}) -> {}(p{}) with pointer {:?}",
+                        from.0.0, from.1.0, to.0.0, to.1.0, input_pointer
+                    );
+
+                    input_pointer
+                })
+                .collect::<Vec<_>>();
+
+            println!(
+                "Node {}'s dependencies are calculated, we can allocate it.",
+                current_node_key.0
+            );
+            let current_node = graph.nodes.get(&current_node_key).unwrap();
+
+            let mut output_pointer_to_return = None;
+
+            let output_pointers = (0..).scan((), move |_, output_index| {
+                if let Some(output) = current_node.output_socket(output_index) {
+                    let pointer = allocate::<f32>(edge_data);
+                    socket_pointer_cache
+                        .insert((current_node_key, SocketIndex(output_index)), pointer);
+
+                    if output_index == current_output_socket.0 {
+                        output_pointer_to_return = Some(pointer);
+                    }
+
+                    println!(
+                        "- Allocating output {} with {} bytes.",
+                        output_index, output.size
+                    );
+                    Some(pointer)
+                } else {
+                    None
                 }
+            });
 
-                println!("Going through edge {}(p{}) <- {}(p{})", to.0.0, to.1.0, from.0.0, from.1.0);
-
-                depth_first_traverse(from.0, graph, visited_nodes);
-
-                println!("Walking back through edge {}(p{}) <- {}(p{})", to.0.0, to.1.0, from.0.0, from.1.0);
-            }
-
-            println!("Came back from node {}. Should allocate.", current_node_key.0);
+            println!(
+                "Allocating node {} and popping it from stack.",
+                current_node_key.0
+            );
+            let mut parameter_iterator = input_pointers.into_iter().chain(output_pointers);
+            let vertex = current_node.bind2(&mut parameter_iterator);
+            vertices.push(vertex);
+            /// Safety: The loop above will definitely set the value,
+            /// since it does so within an infinite loop,
+            /// within a condition that we know is true
+            ///  (an output exists with the same index in `current_output_socket`),
+            /// since it's how `depth_first_traverse` was called in the first place.
+            output_pointer_to_return
         }
 
-        depth_first_traverse(sink, graph, &mut visited_nodes);
+        let sink_output_pointer = depth_first_traverse(
+            sink_node,
+            SocketIndex(sink_socket),
+            graph,
+            &mut visited_nodes,
+            &mut edge_data,
+            &mut socket_pointers,
+            &mut vertices,
+        );
 
-        Self { edge_data, vertices }
+        Self {
+            edge_data,
+            vertices,
+        }
     }
 
     /// Creates a pipeline given a graph — notice this takes a & reference to the graph,
@@ -191,34 +315,28 @@ impl GraphPipeline {
             let input_ptrs = input_ptrs
                 .iter()
                 .copied()
-                .map(|(pointer, _)| {
-                    pointer
-                })
+                .map(|(pointer, _)| pointer)
                 .collect::<Vec<_>>();
 
             let mut output_ptrs: Vec<(*mut u8, SocketIndex)> = graph
                 .edges
                 .iter()
-                .filter_map(
-                    |(_, &(output_node, output_socket))| {
-                        if output_node == node {
-                            edge_pointers
-                                .get(&(output_node, output_socket))
-                                .map(|&p| (p, output_socket))
-                        } else {
-                            None
-                        }
-                    },
-                )
+                .filter_map(|(_, &(output_node, output_socket))| {
+                    if output_node == node {
+                        edge_pointers
+                            .get(&(output_node, output_socket))
+                            .map(|&p| (p, output_socket))
+                    } else {
+                        None
+                    }
+                })
                 .collect();
             output_ptrs.sort_by_key(|(_, index)| *index);
             output_ptrs.dedup_by_key(|(_, index)| *index);
             let output_ptrs = output_ptrs
                 .iter()
                 .copied()
-                .map(|(pointer, _)| {
-                    pointer
-                })
+                .map(|(pointer, _)| pointer)
                 .collect::<Vec<_>>();
 
             // When it's time to bind a node's function, we give it

@@ -4,10 +4,11 @@ use std::{
     io::Write,
     time::Instant,
 };
+use std::hint::black_box;
 use std::marker::PhantomData;
 use graph::Graph;
 use nodes::{NumSource, Sum, YellNum};
-use crate::graph::{GraphPipeline, Node};
+use crate::graph::{GraphPipeline, Node, SocketIndex};
 use crate::nodes::{as_input, as_output, Double};
 
 pub mod old;
@@ -30,7 +31,7 @@ pub fn speed() {
     let mut pipeline = graph.compile(d);
 
     let iterations = 1000;
-    let before = Instant::now();
+    let before = black_box(Instant::now());
     for _ in 0..iterations {
         pipeline.run();
     }
@@ -93,6 +94,11 @@ fn new_traversal() {
     graph.connect(doubler_r, 0, sum, 1).unwrap();
     graph.connect(sum, 0, output, 0).unwrap();
 
-    let mut p = GraphPipeline::from_graph2(&graph, output);
+    let mut p = GraphPipeline::from_graph2(&graph, output, 0);
     p.run();
+}
+
+#[test]
+fn generators() {
+    
 }
