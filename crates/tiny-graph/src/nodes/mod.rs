@@ -6,7 +6,7 @@ pub struct NumSource {
 }
 
 impl Node for NumSource {
-    fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+    fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let value = self.value;
         let out = as_output::<f64>(parameters.next().unwrap());
 
@@ -32,7 +32,7 @@ impl Node for NumSource {
 pub struct Sum;
 
 impl Node for Sum {
-    fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+    fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let in1 = as_input::<f64>(parameters.next().unwrap());
         let in2 = as_input::<f64>(parameters.next().unwrap());
         let out = as_output::<f64>(parameters.next().unwrap());
@@ -59,7 +59,7 @@ impl Node for Sum {
 pub struct Double;
 
 impl Node for Double {
-    fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+    fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let in1 = as_input::<f64>(parameters.next().unwrap());
         let out = as_output::<f64>(parameters.next().unwrap());
 
@@ -102,7 +102,7 @@ impl Node for Double {
 pub struct YellNum;
 
 impl Node for YellNum {
-    fn bind2(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+    fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let in1 = as_input::<f64>(parameters.next().unwrap());
 
         Box::new(move || {

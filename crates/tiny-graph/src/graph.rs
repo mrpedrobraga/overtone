@@ -14,14 +14,14 @@ pub struct NodeKey(usize);
 pub struct SocketIndex(usize);
 
 pub struct SocketData {
-    type_id: TypeId,
     size: usize,
+    align: usize,
 }
 impl SocketData {
     pub fn new<T: 'static>() -> Self {
         Self {
-            type_id: TypeId::of::<T>(),
             size: size_of::<T>(),
+            align: align_of::<T>(),
         }
     }
 }
@@ -32,8 +32,8 @@ pub trait Node {
     /// It takes self here simply to be dyn-compatible.
     ///
     /// TODO: Maybe instead of returning a boxed closure, which is going to be
-    /// put in a Vec anyways, maybe pass an arena for `bind` to allocate the closure in.
-    fn bind2(&self, parameters: &mut dyn Iterator<Item = *mut u8>) -> Box<dyn FnMut()>;
+    /// put in a Vec anyways, maybe pass an arena for `bind_parameters` to allocate the closure in.
+    fn bind_parameters(&self, parameters: &mut dyn Iterator<Item = *mut u8>) -> Box<dyn FnMut()>;
 
     /// Returns data about an input socket.
     /// Take self so the trait is dyn-compatible.
@@ -113,19 +113,9 @@ pub struct GraphPipeline {
 
 impl GraphPipeline {
     pub fn from_graph(graph: &Graph, sink_node: NodeKey, sink_socket: usize) -> Self {
-        /// Precalculate the total amount of output sockets.
-        /// It's important that this vector never reallocates after we
-        /// start taking pointers from it;
         let mut edge_data = Vec::with_capacity(256);
-
-        /// This vector can reallocate, but it's better if it doesn't, right?
-        /// Not all nodes in the graph will be part of the pipeline but this is the
-        /// only upper bound we get before we start traversing.
         let mut vertices = Vec::with_capacity(graph.nodes.len());
-
-        /// Stores all the nodes we've already visited.
         let mut visited_nodes = HashSet::<NodeKey>::new();
-        /// Pointers for all the output sockets' memory regions.
         let mut socket_pointers = HashMap::<(NodeKey, SocketIndex), *mut u8>::new();
 
         fn depth_first_traverse(
@@ -138,7 +128,6 @@ impl GraphPipeline {
             vertices: &mut Vec<Box<dyn FnMut()>>,
         ) -> Option<*mut u8> {
             if visited_nodes.contains(&current_node_key) {
-                println!("Node {} already visited: going back.", current_node_key.0);
                 return Some(
                     socket_pointer_cache
                         .get(&(current_node_key, current_output_socket))
@@ -148,19 +137,12 @@ impl GraphPipeline {
             }
             visited_nodes.insert(current_node_key);
 
-            println!("Pushed node {} onto the stack.", current_node_key.0);
-
             /// TODO: Sort the edges based on the current node's socket order.
             let input_pointers = graph
                 .edges
                 .iter()
                 .filter(|((to_node, _), _)| *to_node == current_node_key)
                 .map(|(to, from)| {
-                    println!(
-                        "Walking through {}(p{}) -> {}(p{})",
-                        to.0.0, to.1.0, from.0.0, from.1.0
-                    );
-
                     let input_pointer = depth_first_traverse(
                         from.0,
                         from.1,
@@ -172,19 +154,10 @@ impl GraphPipeline {
                     )
                     .unwrap();
 
-                    println!(
-                        "Walking through {}(p{}) -> {}(p{}) with pointer {:?}",
-                        from.0.0, from.1.0, to.0.0, to.1.0, input_pointer
-                    );
-
                     input_pointer
                 })
                 .collect::<Vec<_>>();
 
-            println!(
-                "Node {}'s dependencies are calculated, we can allocate it.",
-                current_node_key.0
-            );
             let current_node = graph.nodes.get(&current_node_key).unwrap();
 
             let mut output_pointer_to_return = None;
@@ -196,7 +169,7 @@ impl GraphPipeline {
                         .map(|output| (output_index, output))
                 })
                 .map(|(output_index, output)| {
-                    let pointer = allocate::<f64>(edge_data);
+                    let pointer = allocate_aligned(edge_data, output.size, output.align);
                     socket_pointer_cache
                         .insert((current_node_key, SocketIndex(output_index)), pointer);
 
@@ -204,25 +177,13 @@ impl GraphPipeline {
                         output_pointer_to_return = Some(pointer);
                     }
 
-                    println!(
-                        "- Allocating output {} with {} bytes.",
-                        output_index, output.size
-                    );
                     pointer
                 });
 
-            println!(
-                "Allocating node {} and popping it from stack.",
-                current_node_key.0
-            );
             let mut parameter_iterator = input_pointers.into_iter().chain(output_pointers);
-            let vertex = current_node.bind2(&mut parameter_iterator);
+            let vertex = current_node.bind_parameters(&mut parameter_iterator);
             vertices.push(vertex);
-            /// Safety: The loop above will definitely set the value,
-            /// since it does so within an infinite loop,
-            /// within a condition that we know is true
-            ///  (an output exists with the same index in `current_output_socket`),
-            /// since it's how `depth_first_traverse` was called in the first place.
+            
             output_pointer_to_return
         }
 
@@ -268,8 +229,4 @@ fn allocate_aligned(buffer: &mut Vec<u8>, size: usize, align: usize) -> *mut u8 
     let current_pointer = current_pointer.wrapping_add(padding);
     buffer.extend(std::iter::repeat(0x00).take(padding + size));
     current_pointer
-}
-
-fn allocate<T>(buffer: &mut Vec<u8>) -> *mut u8 {
-    allocate_aligned(buffer, size_of::<T>(), align_of::<T>())
 }

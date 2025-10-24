@@ -39,6 +39,27 @@ pub fn speed() {
     std::io::stdout().flush().unwrap();
 }
 
+#[test]
+pub fn compile_speed() {
+    let mut graph = Graph::new();
+
+    let a = graph.insert(NumSource { value: 2.0 });
+    let b = graph.insert(NumSource { value: 1.0 });
+    let c = graph.insert(Sum);
+    let d = graph.insert(YellNum);
+
+    graph.connect(a, 0, c, 0).unwrap();
+    graph.connect(b, 0, c, 1).unwrap();
+    graph.connect(c, 0, d, 0).unwrap();
+
+    let iterations = 100;
+    let before = Instant::now();
+    for _ in 0..iterations {
+        let mut pipeline = graph.compile(d, 0);
+    }
+    println!("Took {:?}", before.elapsed().div_f64(iterations as f64));
+    std::io::stdout().flush().unwrap();
+}
 
 #[test]
 fn diamond() {
@@ -77,9 +98,4 @@ fn diamond() {
 
     let mut p = GraphPipeline::from_graph(&graph, output, 0);
     p.run();
-}
-
-#[test]
-fn generators() {
-    
 }
