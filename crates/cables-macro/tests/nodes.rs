@@ -6,8 +6,8 @@ use cables_macro::node_impl;
 fn test_node() {
     let mut graph = Graph::new();
 
-    let a = graph.insert(Num { val: 3.0 });
-    let b = graph.insert(Num { val: 6.0 });
+    let a = graph.insert(Num(3.0));
+    let b = graph.insert(Num(6.0));
     let ab = graph.insert(Add);
     let print = graph.insert(Print);
 
@@ -27,13 +27,11 @@ impl Node for Add {
     }
 }
 
-struct Num {
-    val: f32,
-}
-#[node_impl(fields(val))]
+struct Num(f32);
+#[node_impl(fields(value = 0))]
 impl Node for Num {
     fn process(out: &mut f32) {
-        *out = val;
+        *out = value;
     }
 }
 

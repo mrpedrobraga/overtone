@@ -1,6 +1,10 @@
 use proc_macro::TokenStream;
-use quote::quote;
-use syn::{parse_macro_input, Error, FnArg, ImplItem, ItemImpl, PatType, Type, TypeReference};
+use proc_macro2::Ident;
+use quote::{format_ident, quote};
+use syn::{
+    parse_macro_input, Error, FnArg, ImplItem, Index, ItemImpl, LitInt, LitStr, PatType, Type,
+    TypeReference,
+};
 
 #[proc_macro_attribute]
 pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
@@ -11,16 +15,35 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
             &impl_block,
             "this is supposed to be an implementation of `Node`",
         )
-            .to_compile_error()
-            .into();
+        .to_compile_error()
+        .into();
     };
 
+    enum FieldRef {
+        Indexed(Index),
+        Named(Ident),
+    }
     let mut self_fields = Vec::new();
     let args_parser = syn::meta::parser(|meta| {
         if meta.path.is_ident("fields") {
             meta.parse_nested_meta(|meta| {
                 if let Some(ident) = meta.path.get_ident() {
-                    self_fields.push(ident.clone());
+                    if let Ok(v) = meta.value() {
+                        if let Ok(lit_int) = v.parse::<LitInt>() {
+                            let idx = syn::Index::from(lit_int.base10_parse::<usize>()?);
+                            self_fields.push((ident.clone(), FieldRef::Indexed(idx)));
+                        } else if let Ok(lit_str) = v.parse::<LitStr>() {
+                            // string literal → map to local ident
+                            self_fields.push((
+                                ident.clone(),
+                                FieldRef::Named(format_ident!("{}", lit_str.value())),
+                            ));
+                        } else {
+                            return Err(meta.error("expected integer or string literal"));
+                        }
+                    } else {
+                        self_fields.push((ident.clone(), FieldRef::Named(ident.clone())));
+                    }
                 }
                 Ok(())
             })
@@ -86,8 +109,11 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     let output_binds = outputs.iter().map(|(pat, ty)| {
         quote! { let #pat = ::cables_core::as_output::<#ty>(parameters.next().unwrap()); }
     });
-    let field_binds = self_fields.iter().map(|pat| {
-        quote! { let #pat = self.#pat.clone(); }
+    let field_binds = self_fields.iter().map(|(local, field)| {
+        match field {
+            FieldRef::Indexed(idx) => quote! { let #local = self.#idx.clone(); },
+            FieldRef::Named(field) => quote! { let #local = self.#field.clone(); }
+        }
     });
 
     let body = &func.block;

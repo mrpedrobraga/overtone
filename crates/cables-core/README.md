@@ -38,13 +38,12 @@ You _will_ need to create your own nodes. This library doesn't come with any.
 Nodes are effectively just functions, with a lot of reflection.
 
 ```rust
-struct Num(f32);
-impl Num { pub fn new(num: f32) { Self(num) } }
+struct Num(pub f32);
 
-#[node_impl]
+#[node_impl(fields(num = 0))]
 impl Node for Num {
-    fn process(&self, out: &mut f32) {
-        *out = self.num
+    fn process(out: &mut f32) {
+        *out = num
     }
 }
 
