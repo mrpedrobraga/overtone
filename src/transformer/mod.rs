@@ -1,6 +1,6 @@
 //! # Production Setups
 //!
-//! A "Production" uses the [`Element`]s of an arrangement to do things.
+//! A "Production" uses the [`Element`]s of an composition to do things.
 //!
 //! If this description sounds generic, it's because productions can do all sorts of things.
 

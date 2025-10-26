@@ -13,7 +13,7 @@ A music (and more) composition app with a powerful modular architecture.
   - I particularly care about good dynamic error messages and popups for the user;
 - Modular — it's easy to create new renderers, exporters, previewers, etc. Overtone is like a "host" for the many plugins that interconnect;
   - Projects can have "dependencies" on plugins and external resources;
-- Text-based — you can use VCS to keep track of changes in your arrangement, as well as inspect the contents of your songs. This way, you truly OWN your project, you can interact with your song even without Overtone;
+- Text-based — you can use VCS to keep track of changes in your compositions, as well as inspect the contents of your songs. This way, you truly OWN your project, you can interact with your song even without Overtone;
 
 ## Features
 

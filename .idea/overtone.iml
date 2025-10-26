@@ -10,7 +10,13 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/music-std/examples" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/otherhosts/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/lilv/src" isTestSource="false" />
-      <sourceFolder url="file://$MODULE_DIR$/crates/tiny-graph/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/resource-projects/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/resource-projects/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/cables-core/examples" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/cables-core/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/cables-core/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/cables-macro/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/cables-macro/tests" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

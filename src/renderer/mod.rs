@@ -1,6 +1,6 @@
 //! # Rendering
 //!
-//! A [`Renderer`] is an object that observes an [`Arrangement`] and produces an intermediary
+//! A [`Renderer`] is an object that observes an [`Composition`] and produces an intermediary
 //! object (`dyn RenderResult`) that can be either previewed or exported in different ways.
 //!
 //! ## Previewing
@@ -17,16 +17,16 @@
 
 #![allow(dead_code)]
 
-use crate::project::arrangement::Arrangement;
+use crate::project::composition::Composition;
 use std::path::PathBuf;
 
-/// Trait for anything that can render an arrangement to a [`RenderResult`].
+/// Trait for anything that can render an composition to a [`RenderResult`].
 #[deprecated]
 pub trait Renderer {
-    /// Renders the given elements using resources from the [`Arrangement`].
+    /// Renders the given elements using resources from the [`Composition`].
     ///
     /// TODO: Make this method an asynchronously running task that can be probed and cancelled.
-    fn render(&self, arrangement: &Arrangement /* fragment slice */) -> Box<dyn RenderResult>;
+    fn render(&self, composition: &Composition /* fragment slice */) -> Box<dyn RenderResult>;
 
     /// Returns an identifier used by previewers and exporters to identify
     /// the type hidden behind the opaque `dyn RenderResult`.

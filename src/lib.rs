@@ -56,7 +56,7 @@ pub enum OvertoneError {
     IO(IOError),
 
     ProjectError(project::ProjectError),
-    ArrangementError(project::arrangement::ArrangementError),
+    CompositionError(project::composition::CompositionError),
     PluginError(crate::plugin::PluginError),
 }
 

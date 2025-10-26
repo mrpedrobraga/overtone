@@ -1,4 +1,4 @@
-use overtone::project::arrangement::Arrangement;
+use overtone::project::composition::Composition;
 use overtone::{project::Project, OvertoneError};
 
 fn main() -> Result<(), OvertoneError> {
@@ -24,8 +24,8 @@ fn main() -> Result<(), OvertoneError> {
         .get("pcm-wav-exporter")
         .expect("Exporter not found");
 
-    let song = Arrangement::load_from_directory(
-        "./examples/simple_project/Untitled Project/arrangements/Untitled Song".into(),
+    let song = Composition::load_from_directory(
+        "./examples/simple_project/Untitled Project/compositions/Untitled Song".into(),
     )?;
 
     Ok(())

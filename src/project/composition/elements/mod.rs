@@ -4,7 +4,7 @@
 
 use std::path::Path;
 use serde::{Deserialize, Serialize};
-use crate::project::arrangement::time::Moment;
+use crate::project::composition::time::Moment;
 
 /// The trait that represents something that can be composed in a song.
 pub trait Element {

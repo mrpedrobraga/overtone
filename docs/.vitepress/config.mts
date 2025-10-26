@@ -30,8 +30,8 @@ export default defineConfig({
                         text: "Learn",
                         items: [
                             { text: "Projects & Albums", link: "/reference/1. Project" },
-                            { text: "Songs & Compositions", link: "/reference/2. Arrangements" },
-                            { text: "Effects & Setups", link: "/reference/3. Production Setups" },
+                            { text: "Compositions", link: "/reference/2. Compositions" },
+                            { text: "Effects & Audio Setups", link: "/reference/3. Production Setups" },
                             { text: "Developing with Overtone", link: "/guides/dev" }
                         ]
                     },
@@ -82,8 +82,8 @@ export default defineConfig({
                         link: "/project"
                     },
                     {
-                        text: "Arrangements",
-                        link: "/arrangement"
+                        text: "Compositions",
+                        link: "/composition"
                     },
                     {
                         text: "Productions",

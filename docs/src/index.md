@@ -8,7 +8,7 @@ hero:
         The "Blender of music," if you will.
         The "Godot of music," even.
     image:
-        src: /assets/audio-golems.png
+        src: /assets/concept_multi_track_view.png
         alt: Two audio golems looking at each other...
     actions:
       - theme: brand
@@ -22,7 +22,7 @@ features:
   - icon: 🎵
     title: Semantic Notation
     details: First-class support for articulation, ornaments, and other expressive notation WITH playback, right in your piano roll;
-    link: "/reference/arrangement"
+    link: "/reference/composition"
   - icon: 🎙️
     title: Production Setups
     details: Graph-based audio processing for rendering audio with effects, recording clips or performing life, who knows!;

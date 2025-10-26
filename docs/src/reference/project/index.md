@@ -7,11 +7,11 @@ MyProject/
     - Overtone.toml
 ```
 
-Inside of a Project there will be a bunch of stuff. If you created a project through Overtone, it most like looks like this:
+Inside a Project there will be a bunch of stuff. If you created a project through Overtone, it most like looks like this:
 
 ```
 MyProject/
-    arrangements/
+    compositions/
     plugins/
     exports/
     Overtone.toml

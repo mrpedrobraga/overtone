@@ -1,6 +1,6 @@
 //! # Project
 //!
-//! An Overtone [`Project`] is a directory containing arrangements,
+//! An Overtone [`Project`] is a directory containing compositions,
 //! plugins, resources, etc.
 //!
 //! On disk, an Overtone project is recognised as any directory containing a valid
@@ -17,15 +17,15 @@
 //! To maintain the invariants of a project intact, a project should be edited through
 //! [`super::editor`].
 
-use std::collections::HashMap;
 use crate::plugin::{PluginDependencyEntry, PluginError};
-pub mod arrangement;
+use std::collections::HashMap;
+pub mod composition;
 pub mod resource;
 
 use super::{plugin::LoadedPlugin, Info, OvertoneError};
-use crate::project::arrangement::Arrangement;
+use crate::project::composition::Composition;
 use crate::IOError;
-use arrangement::ArrangementError;
+use composition::CompositionError;
 use serde_derive::{Deserialize, Serialize};
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -56,14 +56,14 @@ impl<'a> Info for Project<'a> {
 }
 
 #[derive(Debug)]
-/// Inside every project is a bunch of [`Arrangement`]s.
+/// Inside every project is a bunch of [`Composition`]s.
 /// Here we only keep links to them — they are lazy loaded.
 pub struct ProjectContent {
-    pub arrangements: Vec<Arrangement>,
+    pub compositions: Vec<Composition>,
 }
 
-const OVERTONE_PROJECT_FILE_NAME: &str = "Overtone.toml";
-const DEFAULT_ARRANGEMENTS_DIRECTORY_PATH: &str = "arrangements";
+const PROJECT_MANIFEST_FILENAME: &str = "Overtone.toml";
+const DEFAULT_COMPOSITIONS_DIRECTORY: &str = "compositions";
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProjectManifest {
@@ -81,8 +81,8 @@ pub struct ProjectInfo {
 
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct ConfigurationOverrides {
-    arrangements_dir: Option<PathBuf>,
-    default_export_dir: Option<PathBuf>,
+    compositions_dir: Option<PathBuf>,
+    exports_dir: Option<PathBuf>,
 }
 
 impl ProjectManifest {
@@ -111,7 +111,7 @@ impl ProjectManifest {
 
         let dir_entry = dir
             .filter_map(Result::ok)
-            .find(|v| v.file_name() == OVERTONE_PROJECT_FILE_NAME)
+            .find(|v| v.file_name() == PROJECT_MANIFEST_FILENAME)
             .ok_or_else(|| OvertoneError::IO(IOError::DirectoryIsNotOvertoneProject(None)))?;
 
         Self::load_from_file(dir_entry.path())
@@ -130,7 +130,7 @@ impl<'a> Project<'a> {
             directory: None,
             loaded_plugins: Vec::new(),
             content: ProjectContent {
-                arrangements: vec![],
+                compositions: vec![],
             },
         }
     }
@@ -158,7 +158,7 @@ impl<'a> Project<'a> {
         self.file.save_to_path(
             path.as_ref()
                 .join(self.file.info.name.as_str())
-                .join(OVERTONE_PROJECT_FILE_NAME),
+                .join(PROJECT_MANIFEST_FILENAME),
         )?;
         Ok(())
     }
@@ -183,7 +183,7 @@ impl<'a> Project<'a> {
 
         std::fs::create_dir(&path).map_err(IOError::Generic)?;
         std::fs::create_dir(&path.join("assets")).map_err(IOError::Generic)?;
-        std::fs::create_dir(&path.join("arrangements")).map_err(IOError::Generic)?;
+        std::fs::create_dir(&path.join("compositions")).map_err(IOError::Generic)?;
         std::fs::create_dir(&path.join("exports")).map_err(IOError::Generic)?;
 
         Ok(())
@@ -234,34 +234,34 @@ impl ProjectContent {
         path_str: P,
         path_overrides: &ConfigurationOverrides,
     ) -> Result<Self, OvertoneError> {
-        let arrangements: Vec<Arrangement> = load_project_arrangements(path_str, path_overrides)
-            .map_err(OvertoneError::ArrangementError)?
+        let compositions: Vec<Composition> = load_project_compositions(path_str, path_overrides)
+            .map_err(OvertoneError::CompositionError)?
             .into_iter()
             .collect::<Result<_, _>>()
-            .map_err(OvertoneError::ArrangementError)?;
+            .map_err(OvertoneError::CompositionError)?;
 
-        Ok(Self { arrangements })
+        Ok(Self { compositions })
     }
 }
 
 // TODO: This will be refactored out somewhere else.
-fn load_project_arrangements<P: AsRef<Path>>(
+fn load_project_compositions<P: AsRef<Path>>(
     path: P,
     path_overrides: &ConfigurationOverrides,
-) -> Result<Vec<Result<Arrangement, ArrangementError>>, ArrangementError> {
-    let default_arrangements_directory_path: &Path = Path::new(DEFAULT_ARRANGEMENTS_DIRECTORY_PATH);
-    let dir_path = if let Some(path_buf) = &path_overrides.arrangements_dir {
+) -> Result<Vec<Result<Composition, CompositionError>>, CompositionError> {
+    let default_directory: &Path = Path::new(DEFAULT_COMPOSITIONS_DIRECTORY);
+    let dir_path = if let Some(path_buf) = &path_overrides.compositions_dir {
         path_buf.as_path()
     } else {
-        default_arrangements_directory_path
+        default_directory
     };
 
     let dir_path = path.as_ref().join(&dir_path);
 
     // This will read a directory if it exists or create it if it doesn't.
     let dir = fs::read_dir(&dir_path).or_else(|e| {
-        fs::create_dir_all(&dir_path).map_err(ArrangementError::IOError)?;
-        Ok(fs::read_dir(&dir_path).map_err(ArrangementError::IOError)?)
+        fs::create_dir_all(&dir_path).map_err(CompositionError::IOError)?;
+        Ok(fs::read_dir(&dir_path).map_err(CompositionError::IOError)?)
     })?;
 
     let headers = dir
@@ -270,7 +270,7 @@ fn load_project_arrangements<P: AsRef<Path>>(
             entry
                 .path()
                 .is_dir()
-                .then(|| Arrangement::load_from_directory(entry.path()))
+                .then(|| Composition::load_from_directory(entry.path()))
         })
         .collect();
 

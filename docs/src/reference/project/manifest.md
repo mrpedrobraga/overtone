@@ -1,6 +1,6 @@
 # The `Overtone.toml` manifest
 
-The file that makes a directory be recognised as an Overtone project.
+The file that makes a directory be recognized as an Overtone project.
 
 Here's an example of the manifest of some project might look like.
 
@@ -31,9 +31,9 @@ The manifest is typically a [TOML](https://toml.io/en/) file.
 As you've seen in [the project reference](..), Overtone stores its contents in
 specific subdirectories. You can override what these are in this section.
 
-- `arrangements_dir : Path`;
-    - the name of the directory where arrangements are stored (defaults to `'arrangements'`);
-- `default_export_dir : Path`;
+- `compositions_dir : Path`;
+    - the name of the directory where compositions are stored (defaults to `'compositions'`);
+- `exports_dir : Path`;
     - the name of the directory where exports are placed (defaults to `'exports'`);
 
 ### Dependencies

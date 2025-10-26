@@ -5,15 +5,14 @@ use std::{
     time::Instant,
 };
 use std::hint::black_box;
-use std::marker::PhantomData;
 use graph::Graph;
 use nodes::{NumSource, Sum, YellNum};
-use crate::graph::{GraphPipeline, Node, SocketIndex};
-use crate::nodes::{as_input, as_output, Double};
+use crate::graph::{GraphPipeline, Node};
+use crate::nodes::Double;
 
 pub mod old;
-mod graph;
-mod nodes;
+pub mod graph;
+pub mod nodes;
 
 #[test]
 pub fn speed() {
@@ -106,4 +105,14 @@ fn diamond() {
     let elapsed = before.elapsed();
     println!("Total {:?} ({:?} per run)", elapsed, elapsed.div_f64(iterations as f64));
     std::io::stdout().flush().unwrap();
+}
+
+#[inline]
+pub fn as_input<'a, T>(ptr: *const u8) -> &'a T {
+    unsafe { &*ptr.cast::<T>() }
+}
+
+#[inline]
+pub fn as_output<'a, T>(ptr: *mut u8) -> &'a mut T {
+    unsafe { &mut *ptr.cast::<T>() }
 }

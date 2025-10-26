@@ -1,6 +1,6 @@
 //! # Arrangements
 //!
-//! The soul of an Overtone project is the arrangements.
+//! The soul of an Overtone project is the compositions.
 //!
 //! Arrangements combine [`Fragment`]s together to create things (i.e. songs, video).
 //! Fragments themselves might be internally composed of sub-elements in a graph-like fashion.
@@ -12,19 +12,19 @@
 //! > as it shows in the track editor. Internally, the individual notes of a piano roll are considered
 //! > its elements, etc.
 //!
-//! An arrangement contains a single fragment, which seems to imply you can only have One Thing
+//! An composition contains a single fragment, which seems to imply you can only have One Thing
 //! in your song, but you can choose it to be a kind of fragment that itself can house many elements
 //! like a Piano Roll, a Multi Type Fragment, etc.;
 //!
 //! ## Lazy Loading
 //!
 //! Fragments are lazy-loaded, this is so you can navigate through hundreds of thousands
-//! of arrangements seamlessly. Furthermore, some Fragments are "owned" by the [`Project`]
-//! allowing you to use it in many different arrangements.
+//! of compositions seamlessly. Furthermore, some Fragments are "owned" by the [`Project`]
+//! allowing you to use it in many different compositions.
 //!
 //! ## Serialization
 //!
-//! An arrangement is saved on disk as a folder, which allows you to see all of its parts.
+//! An composition is saved on disk as a folder, which allows you to see all of its parts.
 
 use serde_derive::{Deserialize, Serialize};
 use std::path::PathBuf;
@@ -36,56 +36,50 @@ use crate::project::resource::{Resource, ResourceFieldInfo, ResourceFieldValue, 
 pub mod elements;
 pub mod time;
 
-const ARRANGEMENT_HEADER_FILE_NAME: &str = "header.toml";
+const COMPOSITION_HEADER_FILENAME: &str = "header.toml";
 
 #[derive(Serialize, Deserialize, Debug)]
-/// An arrangement.
-pub struct Arrangement {
-    pub meta: ArrangementMetadata,
-    pub content: ArrangementContent,
+pub struct Composition {
+    pub meta: CompositionMetadata,
+    pub content: CompositionContent,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-/// Basic information about an Arrangement.
-/// > This can optionally be written to the files you export (like MP3 ID3).
-pub struct ArrangementMetadata {
+pub struct CompositionMetadata {
     pub name: String,
     pub authors: Option<Vec<String>>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-/// The content of an arrangement — as of now it's just a singular
-/// reference to an arrangement fragment.
-pub struct ArrangementContent {
+pub struct CompositionContent {
     root_fragment: ArrFragmentReference,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-/// A reference to an arrangement fragment...
-///
-/// TODO: Maybe formalise a "dependency system" for these things.
 pub struct ArrFragmentReference {
+    /// TODO: This will be replaced by `ResourceId` in alpha.
+    #[deprecated]
     pub id: DependencyId,
 }
 
-impl Arrangement {
-    /// Loads an arrangement from a directory containing a `header.toml` file.
+impl Composition {
+    /// Loads an composition from a directory containing a `header.toml` file.
     pub fn load_from_directory(
         path: PathBuf,
-    ) -> Result<Self, ArrangementError> {
+    ) -> Result<Self, CompositionError> {
         // Check for the header file inside.
-        let header_path = path.join(ARRANGEMENT_HEADER_FILE_NAME);
-        let header_bytes = fs::read(header_path).map_err(ArrangementError::HeaderIOError)?;
+        let header_path = path.join(COMPOSITION_HEADER_FILENAME);
+        let header_bytes = fs::read(header_path).map_err(CompositionError::HeaderIOError)?;
         let header_raw =
-            String::from_utf8(header_bytes).map_err(ArrangementError::HeaderEncodingError)?;
+            String::from_utf8(header_bytes).map_err(CompositionError::HeaderEncodingError)?;
         let header: Self =
-            toml::from_str(&header_raw).map_err(ArrangementError::HeaderDeserializeError)?;
+            toml::from_str(&header_raw).map_err(CompositionError::HeaderDeserializeError)?;
 
         Ok(header)
     }
 }
 
-impl<'a> Resource<'a> for Arrangement {
+impl<'a> Resource<'a> for Composition {
     fn get_fields_info() -> &'a [ResourceFieldInfo] {
         &[
             ResourceFieldInfo { name: "name" }
@@ -123,9 +117,9 @@ impl<'a> Resource<'a> for Arrangement {
 // MARK: Errors
 
 #[derive(Debug)]
-/// An error that originated from doing something regarding [`Arrangement`]s.
-pub enum ArrangementError {
-    /// The folder the arrangement was supposed to be contained in does not exist.
+/// An error that originated from doing something regarding [`Composition`]s.
+pub enum CompositionError {
+    /// The folder the composition was supposed to be contained in does not exist.
     MissingFolder,
     /// An error occurred when doing IO.
     IOError(std::io::Error),
@@ -137,8 +131,8 @@ pub enum ArrangementError {
     HeaderDeserializeError(toml::de::Error),
 }
 
-impl From<ArrangementError> for OvertoneError {
-    fn from(value: ArrangementError) -> Self {
-        OvertoneError::ArrangementError(value)
+impl From<CompositionError> for OvertoneError {
+    fn from(value: CompositionError) -> Self {
+        OvertoneError::CompositionError(value)
     }
 }

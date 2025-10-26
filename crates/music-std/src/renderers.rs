@@ -1,7 +1,7 @@
 use crate::formats::pcm::{AudioPcm, PCM_RENDER_FORMAT_ID};
 use {
     overtone::{
-        project::arrangement::Arrangement,
+        project::composition::Composition,
         renderer::{RenderResult, Renderer},
     },
     std::collections::HashMap,
@@ -18,12 +18,12 @@ pub fn get() -> HashMap<String, Box<dyn Renderer>> {
     map
 }
 
-/// Renderer that emits audio from an arrangement.
+/// Renderer that emits audio from an composition.
 #[derive(Default)]
 pub struct AudioPCMRenderer {}
 
 impl Renderer for AudioPCMRenderer {
-    fn render(&self, arrangement: &Arrangement /* fragment slice */) -> Box<dyn RenderResult> {
+    fn render(&self, composition: &Composition /* fragment slice */) -> Box<dyn RenderResult> {
         let audio_pcm = AudioPcm::example();
 
         Box::new(audio_pcm)

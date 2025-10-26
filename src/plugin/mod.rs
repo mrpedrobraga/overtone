@@ -74,7 +74,7 @@ pub enum PluginContribution {
     /// A 'Node' that can be used in a Production Setup.
     Node(Box<dyn Node>),
     /// An Exporter, which can be used to export productions
-    /// of arrangements.
+    /// of compositions.
     Exporter(Box<dyn RenderExporter>),
     /// A new 'kind' of contribution that this plugin
     /// or other plugins can contribute with.

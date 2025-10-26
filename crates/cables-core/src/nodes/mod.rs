@@ -1,5 +1,4 @@
 use std::hint::black_box;
-use std::marker::PhantomData;
 use crate::graph::{Node, SocketData};
 
 pub struct NumSource {
@@ -9,7 +8,7 @@ pub struct NumSource {
 impl Node for NumSource {
     fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
         let value = self.value;
-        let out = as_output::<f64>(parameters.next().unwrap());
+        let out = crate::as_output::<f64>(parameters.next().unwrap());
 
         Box::new(move || {
             *out = value;
@@ -34,9 +33,9 @@ pub struct Sum;
 
 impl Node for Sum {
     fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
-        let in1 = as_input::<f64>(parameters.next().unwrap());
-        let in2 = as_input::<f64>(parameters.next().unwrap());
-        let out = as_output::<f64>(parameters.next().unwrap());
+        let in1 = crate::as_input::<f64>(parameters.next().unwrap());
+        let in2 = crate::as_input::<f64>(parameters.next().unwrap());
+        let out = crate::as_output::<f64>(parameters.next().unwrap());
 
         Box::new(move || *out = *in1 + *in2)
     }
@@ -61,8 +60,8 @@ pub struct Double;
 
 impl Node for Double {
     fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
-        let in1 = as_input::<f64>(parameters.next().unwrap());
-        let out = as_output::<f64>(parameters.next().unwrap());
+        let in1 = crate::as_input::<f64>(parameters.next().unwrap());
+        let out = crate::as_output::<f64>(parameters.next().unwrap());
 
         Box::new(move || *out = *in1 * 2.0)
     }
@@ -104,7 +103,7 @@ pub struct YellNum;
 
 impl Node for YellNum {
     fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
-        let in1 = as_input::<f64>(parameters.next().unwrap());
+        let in1 = crate::as_input::<f64>(parameters.next().unwrap());
 
         Box::new(move || {
             //print!("{};", *in1);
@@ -126,12 +125,3 @@ impl Node for YellNum {
     }
 }
 
-#[inline]
-pub fn as_input<'a, T>(ptr: *const u8) -> &'a T {
-    unsafe { &*ptr.cast::<T>() }
-}
-
-#[inline]
-pub fn as_output<'a, T>(ptr: *mut u8) -> &'a mut T {
-    unsafe { &mut *ptr.cast::<T>() }
-}
