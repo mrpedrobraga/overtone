@@ -20,6 +20,7 @@ fn test_node() {
 }
 
 struct Add;
+
 #[node_impl]
 impl Node for Add {
     fn process(in1: &f32, in2: &f32, out: &mut f32) {
@@ -28,6 +29,7 @@ impl Node for Add {
 }
 
 struct Num(f32);
+
 #[node_impl(fields(value = 0))]
 impl Node for Num {
     fn process(out: &mut f32) {
@@ -36,6 +38,7 @@ impl Node for Num {
 }
 
 struct Print;
+
 #[node_impl]
 impl Node for Print {
     fn process(in1: &f32) {

@@ -53,7 +53,6 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     });
 
     parse_macro_input!(attribute with args_parser);
-    let self_ty = &impl_block.self_ty;
 
     let func = impl_block.items.iter().find_map(|item| match item {
         ImplItem::Fn(f) if f.sig.ident == "process" => Some(f),
@@ -62,7 +61,7 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     let Some(func) = func else {
         return Error::new_spanned(
             &impl_block,
-            "expected `fn process(&self, ...inputs, ...outputs)`",
+            "expected `fn process(...inputs, ...outputs)`",
         )
         .to_compile_error()
         .into();
@@ -109,11 +108,9 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     let output_binds = outputs.iter().map(|(pat, ty)| {
         quote! { let #pat = ::cables_core::as_output::<#ty>(parameters.next().unwrap()); }
     });
-    let field_binds = self_fields.iter().map(|(local, field)| {
-        match field {
-            FieldRef::Indexed(idx) => quote! { let #local = self.#idx.clone(); },
-            FieldRef::Named(field) => quote! { let #local = self.#field.clone(); }
-        }
+    let field_binds = self_fields.iter().map(|(local, field)| match field {
+        FieldRef::Indexed(idx) => quote! { let #local = Clone::clone(&self.#idx); },
+        FieldRef::Named(field) => quote! { let #local = Clone::clone(&self.#field); },
     });
 
     let body = &func.block;
@@ -140,7 +137,7 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     });
 
     let fn_input_socket = quote! {
-        fn input_socket(&self, idx: usize) -> Option<SocketData> {
+        fn input_socket(&self, idx: usize) -> Option<::cables_core::graph::SocketData> {
             match idx {
                 #(#input_socket_match_arms)*
                 _ => None,
@@ -149,7 +146,7 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     };
 
     let fn_output_socket = quote! {
-        fn output_socket(&self, idx: usize) -> Option<SocketData> {
+        fn output_socket(&self, idx: usize) -> Option<::cables_core::graph::SocketData> {
             match idx {
                 #(#output_socket_match_arms)*
                 _ => None,
@@ -157,8 +154,13 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
         }
     };
 
+    let (impl_generics, _, where_clause) = impl_block.generics.split_for_impl();
+    let self_ty = &impl_block.self_ty;
+
+
+
     let final_impl = quote! {
-        impl #trait_ for #self_ty {
+        impl #impl_generics #trait_ for #self_ty #where_clause {
             #fn_bind_parameters
             #fn_input_socket
             #fn_output_socket
