@@ -1,4 +1,5 @@
 use std::hint::black_box;
+use std::ptr::NonNull;
 use crate::graph::{Node, SocketData};
 
 pub struct NumSource {
@@ -6,7 +7,7 @@ pub struct NumSource {
 }
 
 impl Node for NumSource {
-    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut() + 'pip> {
+    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=NonNull<u8>>) -> Box<dyn FnMut() + 'pip> {
         let value = self.value;
         let out = crate::as_output::<f64>(parameters.next().unwrap());
 
@@ -32,7 +33,7 @@ impl Node for NumSource {
 pub struct Sum;
 
 impl Node for Sum {
-    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut() + 'pip> {
+    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=NonNull<u8>>) -> Box<dyn FnMut() + 'pip> {
         let in1 = crate::as_input::<f64>(parameters.next().unwrap());
         let in2 = crate::as_input::<f64>(parameters.next().unwrap());
         let out = crate::as_output::<f64>(parameters.next().unwrap());
@@ -59,7 +60,7 @@ impl Node for Sum {
 pub struct Double;
 
 impl Node for Double {
-    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut() + 'pip> {
+    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=NonNull<u8>>) -> Box<dyn FnMut() + 'pip> {
         let in1 = crate::as_input::<f64>(parameters.next().unwrap());
         let out = crate::as_output::<f64>(parameters.next().unwrap());
 
@@ -102,7 +103,7 @@ impl Node for Double {
 pub struct YellNum;
 
 impl Node for YellNum {
-    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut() + 'pip> {
+    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=NonNull<u8>>) -> Box<dyn FnMut() + 'pip> {
         let in1 = crate::as_input::<f64>(parameters.next().unwrap());
 
         Box::new(move || {

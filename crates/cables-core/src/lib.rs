@@ -5,6 +5,7 @@ use std::{
     time::Instant,
 };
 use std::hint::black_box;
+use std::ptr::NonNull;
 use graph::Graph;
 use nodes::{NumSource, Sum, YellNum};
 use crate::graph::{GraphPipeline, Node};
@@ -108,11 +109,11 @@ fn diamond() {
 }
 
 #[inline]
-pub fn as_input<'a, T>(ptr: *const u8) -> &'a T {
-    unsafe { &*ptr.cast::<T>() }
+pub fn as_input<'a, T>(ptr: NonNull<u8>) -> &'a T {
+    unsafe { ptr.cast::<T>().as_ref() }
 }
 
 #[inline]
-pub fn as_output<'a, T>(ptr: *mut u8) -> &'a mut T {
-    unsafe { &mut *ptr.cast::<T>() }
+pub fn as_output<'a, T>(ptr: NonNull<u8>) -> &'a mut T {
+    unsafe { ptr.cast::<T>().as_mut() }
 }

@@ -1,5 +1,9 @@
+use std::alloc::Layout;
 use std::any::TypeId;
 use std::collections::{HashMap, HashSet};
+use std::ptr::NonNull;
+use bumpalo::Bump;
+
 /// Function that represents a node's processing.
 ///
 /// When running, it will resolve and cast the pointers into the proper input and output types!
@@ -14,14 +18,12 @@ pub struct NodeKey(usize);
 pub struct SocketIndex(usize);
 
 pub struct SocketData {
-    size: usize,
-    align: usize,
+    layout: Layout,
 }
 impl SocketData {
     pub fn new<T: 'static>() -> Self {
         Self {
-            size: size_of::<T>(),
-            align: align_of::<T>(),
+            layout: Layout::new::<T>(),
         }
     }
 }
@@ -33,7 +35,7 @@ pub trait Node {
     ///
     /// TODO: Maybe instead of returning a boxed closure, which is going to be
     /// put in a Vec anyways, maybe pass an arena for `bind_parameters` to allocate the closure in.
-    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item = *mut u8>) -> Box<dyn FnMut() + 'pip>;
+    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item = NonNull<u8>>) -> Box<dyn FnMut() + 'pip>;
 
     /// Returns data about an input socket.
     /// Take self so the trait is dyn-compatible.
@@ -101,7 +103,7 @@ impl Graph {
 pub struct GraphPipeline {
     /// Contains one allocation per graph edge.
     /// Shared memory space that the nodes use to do work.
-    edge_data: Vec<u8>,
+    arena: Bump,
 
     /// Contains a list of functions, one for each node of the graph
     /// in topological order, i.e., dependency order.
@@ -113,23 +115,24 @@ pub struct GraphPipeline {
 
 impl GraphPipeline {
     pub fn from_graph(graph: &Graph, sink_node: NodeKey, sink_socket: usize) -> Self {
-        let mut edge_data = Vec::with_capacity(256);
+        //let mut edge_data = Vec::with_capacity(256);
+        let mut arena = Bump::new();
         let mut vertices = Vec::with_capacity(graph.nodes.len());
         let mut visited_nodes = HashSet::<NodeKey>::new();
-        let mut socket_pointers = HashMap::<(NodeKey, SocketIndex), *mut u8>::new();
+        let mut socket_pointers = HashMap::<(NodeKey, SocketIndex), NonNull<u8>>::new();
 
         fn depth_first_traverse(
             current_node_key: NodeKey,
             current_output_socket: SocketIndex,
             graph: &Graph,
             visited_nodes: &mut HashSet<NodeKey>,
-            edge_data: &mut Vec<u8>,
-            socket_pointer_cache: &mut HashMap<(NodeKey, SocketIndex), *mut u8>,
+            arena: &mut Bump,
+            output_pointer_cache: &mut HashMap<(NodeKey, SocketIndex), NonNull<u8>>,
             vertices: &mut Vec<Box<dyn FnMut()>>,
-        ) -> Option<*mut u8> {
+        ) -> Option<NonNull<u8>> {
             if visited_nodes.contains(&current_node_key) {
                 return Some(
-                    socket_pointer_cache
+                    output_pointer_cache
                         .get(&(current_node_key, current_output_socket))
                         .copied()
                         .unwrap(),
@@ -148,8 +151,8 @@ impl GraphPipeline {
                         from.1,
                         graph,
                         visited_nodes,
-                        edge_data,
-                        socket_pointer_cache,
+                        arena,
+                        output_pointer_cache,
                         vertices,
                     )
                     .unwrap();
@@ -169,15 +172,15 @@ impl GraphPipeline {
                         .map(|output| (output_index, output))
                 })
                 .map(|(output_index, output)| {
-                    let pointer = allocate_aligned(edge_data, output.size, output.align);
-                    socket_pointer_cache
-                        .insert((current_node_key, SocketIndex(output_index)), pointer);
+                    let output_pointer = arena.alloc_layout(output.layout);
+                    output_pointer_cache
+                        .insert((current_node_key, SocketIndex(output_index)), output_pointer);
 
                     if output_index == current_output_socket.0 {
-                        output_pointer_to_return = Some(pointer);
+                        output_pointer_to_return = Some(output_pointer);
                     }
 
-                    pointer
+                    output_pointer
                 });
 
             let mut parameter_iterator = input_pointers.into_iter().chain(output_pointers);
@@ -192,13 +195,13 @@ impl GraphPipeline {
             SocketIndex(sink_socket),
             graph,
             &mut visited_nodes,
-            &mut edge_data,
+            &mut arena,
             &mut socket_pointers,
             &mut vertices,
         );
 
         Self {
-            edge_data,
+            arena,
             vertices,
         }
     }

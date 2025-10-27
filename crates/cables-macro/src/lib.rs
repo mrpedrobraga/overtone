@@ -115,7 +115,7 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     let fn_bind_parameters = quote! {
         fn bind_parameters<'pip>(
             &self,
-            parameters: &mut dyn Iterator<Item = *mut u8>
+            parameters: &mut dyn Iterator<Item = ::std::ptr::NonNull<u8>>
         ) -> Box<dyn FnMut() + 'pip> {
             #(#field_binds)*
             #(#input_binds)*
