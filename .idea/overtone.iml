@@ -17,6 +17,7 @@
       <sourceFolder url="file://$MODULE_DIR$/crates/cables-core/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/crates/cables-macro/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/crates/cables-macro/tests" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/crates/alloc/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

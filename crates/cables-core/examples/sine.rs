@@ -14,7 +14,7 @@ struct SineNode {
     frequency: f32,
 }
 impl Node for SineNode {
-    fn bind_parameters(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut()> {
+    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item=*mut u8>) -> Box<dyn FnMut() + 'pip> {
         let out = as_output::<f64>(parameters.next().unwrap());
         Box::new(move || {
             *out = 42.0

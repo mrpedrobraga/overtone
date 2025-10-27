@@ -59,12 +59,9 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
         _ => None,
     });
     let Some(func) = func else {
-        return Error::new_spanned(
-            &impl_block,
-            "expected `fn process(...inputs, ...outputs)`",
-        )
-        .to_compile_error()
-        .into();
+        return Error::new_spanned(&impl_block, "expected `fn process(...inputs, ...outputs)`")
+            .to_compile_error()
+            .into();
     };
 
     let mut inputs = Vec::new();
@@ -103,10 +100,10 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     }
 
     let input_binds = inputs.iter().map(|(pat, ty)| {
-        quote! { let #pat = ::cables_core::as_input::<#ty>(parameters.next().unwrap()); }
+        quote! { let #pat = ::cables_core::as_input::<'pip, #ty>(parameters.next().unwrap()); }
     });
     let output_binds = outputs.iter().map(|(pat, ty)| {
-        quote! { let #pat = ::cables_core::as_output::<#ty>(parameters.next().unwrap()); }
+        quote! { let #pat = ::cables_core::as_output::<'pip, #ty>(parameters.next().unwrap()); }
     });
     let field_binds = self_fields.iter().map(|(local, field)| match field {
         FieldRef::Indexed(idx) => quote! { let #local = Clone::clone(&self.#idx); },
@@ -116,10 +113,10 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
     let body = &func.block;
 
     let fn_bind_parameters = quote! {
-        fn bind_parameters(
+        fn bind_parameters<'pip>(
             &self,
             parameters: &mut dyn Iterator<Item = *mut u8>
-        ) -> Box<dyn FnMut()> {
+        ) -> Box<dyn FnMut() + 'pip> {
             #(#field_binds)*
             #(#input_binds)*
             #(#output_binds)*
@@ -156,8 +153,6 @@ pub fn node_impl(attribute: TokenStream, input: TokenStream) -> TokenStream {
 
     let (impl_generics, _, where_clause) = impl_block.generics.split_for_impl();
     let self_ty = &impl_block.self_ty;
-
-
 
     let final_impl = quote! {
         impl #impl_generics #trait_ for #self_ty #where_clause {

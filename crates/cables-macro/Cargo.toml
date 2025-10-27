@@ -11,3 +11,6 @@ cables-core = { path = "../cables-core" }
 syn = { version = "2.0.108", features = ["full"] }
 quote = "1.0.41"
 proc-macro2 = "1.0.103"
+
+[dev-dependencies]
+hound = "3.5.1"

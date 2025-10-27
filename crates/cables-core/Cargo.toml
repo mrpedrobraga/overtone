@@ -5,3 +5,4 @@ edition = "2024"
 
 [dependencies]
 hound = "3.5.1"
+bumpalo = "3.19.0"

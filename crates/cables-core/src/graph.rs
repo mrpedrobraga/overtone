@@ -33,7 +33,7 @@ pub trait Node {
     ///
     /// TODO: Maybe instead of returning a boxed closure, which is going to be
     /// put in a Vec anyways, maybe pass an arena for `bind_parameters` to allocate the closure in.
-    fn bind_parameters(&self, parameters: &mut dyn Iterator<Item = *mut u8>) -> Box<dyn FnMut()>;
+    fn bind_parameters<'pip>(&self, parameters: &mut dyn Iterator<Item = *mut u8>) -> Box<dyn FnMut() + 'pip>;
 
     /// Returns data about an input socket.
     /// Take self so the trait is dyn-compatible.
